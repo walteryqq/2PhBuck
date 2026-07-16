@@ -599,6 +599,10 @@ try:
 </svg>"""
     st.markdown(small_signal_svg, unsafe_allow_html=True)
     
+    leq_uH = bode_res['Leq'] * 1e6
+    rdcr_eq_mOhm = (Rdcr / 2.0) * 1e3
+    delay_val_us = (delay_cycles / fs) * 1e6
+    
     st.info(f"""
     📝 **小信号电路平均模型参数关系**:
     1. **双相并联等效**: 当两相交错并联工作时，小信号交流模型可以简化为单等效通道。电感减半为 $L_{{eq}} = \\frac{{L_{{tr}}}}{{2}} = \\frac{{L(1-|k|)}}{{2}}$，DCR电阻减半为 $R_{{dcr\\_eq}} = \\frac{{R_{{dcr}}}}{{2}}$。
@@ -611,6 +615,20 @@ try:
        * **原边并联受控电流源**:
          - **公式**: $j(s) = \\frac{{V_{{ref}}}}{{R_{{load}}}} \\hat{{d}}(s) = I_{{load}} \\hat{{d}}(s)$ (原边输入抽取电流小信号扰动，主要由稳态直流负载电流决定)
          - **当前计算**: $\\frac{{{vref:.2f}\\text{{ V}}}}{{{r_load_step:.4f}\\ \\Omega}} \\approx {vref / r_load_step:.1f}\\text{{ A}}$，即图中标注的 **{vref / r_load_step:.1f}\\text{{ A}} \\cdot \\hat{{d}}(s)$**。
+    4. **开环环路增益 $T(s)$ 解析表达式与计算过程**:
+       * **总环路增益**:
+         $$T(s) = H(s) \\cdot \\frac{{1}}{{V_M}} \\cdot G_{{vd}}(s)$$
+       * **反馈控制器传递函数 $H(s)$** (含 PI/PID 增益及数字延时):
+         $$H(s) = \\left( K_p + \\frac{{K_{{i,c}}}}{{s}} + \\frac{{K_d s}}{{1 + \\tau_d s}} \\right) \\cdot e^{{-s T_{{delay}}}}$$
+         代入当前值：
+         $$H(s) = \\left( {kp:.5f} + \\frac{{{ki_continuous:.2f}}}{{s}} + \\frac{{{kd:.6e} s}}{{1 + {tau_d:.2e} s}} \\right) \\cdot e^{{-s \\cdot {delay_val_us:.2f}\\,\\mu\\text{{s}}}}$$
+       * **控制-输出传递函数 $G_{{vd}}(s)$**:
+         $$G_{{vd}}(s) = V_{{in}} \\cdot \\frac{{Z_p(s)}}{{Z_L(s) + Z_p(s)}}$$
+         其中：
+         - 电感分支阻抗: $Z_L(s) = s L_{{eq}} + R_{{dcr\\_eq}}$ (当前值: $s \\cdot {leq_uH:.3f}\\,\\mu\\text{{H}} + {rdcr_eq_mOhm:.2f}\\,\\text{{m}}\\Omega$)
+         - 输出电容等效阻抗: $Z_C(s) = \\left(R_{{esr1}} + \\frac{{1}}{{s C_1}}\\right) \\parallel \\left(R_{{esr2}} + \\frac{{1}}{{s C_2}}\\right)$ (当前并联值: $C_1 = {c1_uF:.0f}\\,\\mu\\text{{F}}$, $C_2 = {c2_uF:.0f}\\,\\mu\\text{{F}}$)
+         - 并联负载分支阻抗: $Z_p(s) = Z_C(s) \\parallel R_{{load}}$ (当前负载: $R_{{load}} = {r_load_step:.3f}\\,\\Omega$)
+         - 归一化调制器增益: $1/V_M = 1$
     """)
     
     st.markdown("---")
