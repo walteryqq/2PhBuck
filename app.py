@@ -568,28 +568,19 @@ try:
 <path d="M 660 305 L 660 275" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow_sm)"/>
 <text x="660" y="316" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0F172A" text-anchor="middle">v̂_ref(s) (=0)</text>
 
-<!-- Error Signal v_e(s) from Summing Junction to Compensator H(s) -->
-<path d="M 645 260 L 610 260" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow_sm)"/>
-<text x="627" y="252" font-family="sans-serif" font-size="9" font-weight="bold" fill="#64748B" text-anchor="middle">v̂_e(s)</text>
+<!-- Error Signal v_e(s) from Summing Junction to Controller -->
+<path d="M 645 260 L 560 260" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow_sm)"/>
+<text x="602" y="252" font-family="sans-serif" font-size="9" font-weight="bold" fill="#64748B" text-anchor="middle">v̂_e(s)</text>
 
-<!-- Feedback Compensator H(s) (PI Compensator & Delay) -->
-<rect x="410" y="230" width="200" height="60" rx="6" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2"/>
-<text x="510" y="244" font-family="sans-serif" font-size="10.5" font-weight="bold" fill="#1E3A8A" text-anchor="middle">反馈补偿器 H(s)</text>
-<text x="510" y="256" font-family="sans-serif" font-size="9" fill="#1E3A8A" text-anchor="middle">Kp = {kp_val}, Ki = {ki_val}</text>
-<text x="510" y="268" font-family="sans-serif" font-size="9" fill="#1E3A8A" text-anchor="middle">Kd = {kd_val}</text>
-<text x="510" y="280" font-family="sans-serif" font-size="8.5" fill="#4B5563" text-anchor="middle">f_sam = {fctrl_val} kHz, 延时 = {delay_val} T_sw</text>
-
-<!-- Compensator Output v_c(s) to PWM -->
-<path d="M 410 260 L 365 260" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow_sm)"/>
-<text x="387" y="252" font-family="sans-serif" font-size="9" font-weight="bold" fill="#64748B" text-anchor="middle">v̂_c(s)</text>
-
-<!-- PWM Modulator Block -->
-<rect x="275" y="230" width="90" height="60" rx="6" fill="#F3E8FF" stroke="#8B5CF6" stroke-width="2"/>
-<text x="320" y="249" font-family="sans-serif" font-size="11" font-weight="bold" fill="#6B21A8" text-anchor="middle">PWM 调制</text>
-<text x="320" y="271" font-family="sans-serif" font-size="9" fill="#6B21A8" text-anchor="middle">1 / V_M</text>
+<!-- Combined Feedback Controller H(s) (PI/PID & Delay & PWM) -->
+<rect x="320" y="230" width="240" height="60" rx="6" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2"/>
+<text x="440" y="244" font-family="sans-serif" font-size="10.5" font-weight="bold" fill="#1E3A8A" text-anchor="middle">反馈控制器 H(s)</text>
+<text x="440" y="256" font-family="sans-serif" font-size="9" fill="#1E3A8A" text-anchor="middle">Kp = {kp_val}, Ki = {ki_val}</text>
+<text x="440" y="268" font-family="sans-serif" font-size="9" fill="#1E3A8A" text-anchor="middle">Kd = {kd_val}, 1/V_M = 1</text>
+<text x="440" y="280" font-family="sans-serif" font-size="8.5" fill="#4B5563" text-anchor="middle">f_sam = {fctrl_val} kHz, 延时 = {delay_val} T_sw</text>
 
 <!-- Duty Ratio Output d(s) feedback to the top source -->
-<path d="M 275 260 L 245 260 L 245 190 L 175 190 L 175 110" fill="none" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow_sm)"/>
+<path d="M 320 260 L 245 260 L 245 190 L 175 190 L 175 110" fill="none" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow_sm)"/>
 <text x="230" y="182" font-family="sans-serif" font-size="10" font-weight="bold" fill="#64748B" text-anchor="middle">d̂(s)</text>
 
 <!-- T(s) Circular Loop Gain indicator -->
