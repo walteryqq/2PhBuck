@@ -19,8 +19,8 @@ class SpecPDF(FPDF):
         self.cell(w=self.epw, h=10, text=f"第 {self.page_no()} 页 / {{nb}}", align="C", new_x="LMARGIN", new_y="NEXT")
 
 def build_pdf():
-    txt_path = "2KW_Coupled_Buck_Specification.txt"
-    pdf_path = "2KW_Coupled_Buck_Specification.pdf"
+    txt_path = "DesignDoc/2KW_Coupled_Buck_Specification.txt"
+    pdf_path = "DesignDoc/2KW_Coupled_Buck_Specification.pdf"
     
     if not os.path.exists(txt_path):
         print(f"Error: {txt_path} not found.")
@@ -48,6 +48,18 @@ def build_pdf():
     for line in lines:
         line_strip = line.strip()
         
+        # Image insertion check
+        if line_strip.startswith("[IMAGE:") and line_strip.endswith("]"):
+            img_path = line_strip[7:-1].strip()
+            # Resolve path relative to current or DesignDoc folder
+            if not os.path.exists(img_path) and os.path.exists(os.path.join("DesignDoc", img_path)):
+                img_path = os.path.join("DesignDoc", img_path)
+            if os.path.exists(img_path):
+                pdf.ln(2)
+                pdf.image(img_path, x=(pdf.w - 140)/2, w=140)
+                pdf.ln(4)
+            continue
+
         # Skip empty lines
         if not line_strip:
             pdf.ln(3)
