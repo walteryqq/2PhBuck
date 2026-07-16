@@ -185,10 +185,28 @@ st.markdown("""
 st.markdown('<div class="main-title">⚡ 两相交错并联 Buck 耦合电感设计与控制调试系统</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">针对反向耦合电感（Negatively Coupled Inductor）进行物理建模，并基于离散 MCU 数字控制器（ZOH、计算延迟、PI/PID 控制）进行双环/单环时域暂态仿真与频域 Bode 图环路设计。</div>', unsafe_allow_html=True)
 
+# Sidebar Navigation Index
+st.sidebar.markdown("""
+### 📑 导航索引 (Navigation Index)
+* **[1. 拓扑与参数配置](#section-1)**
+  * [1.1 核心拓扑与滤波器参数](#section-1-1)
+  * [1.2 数字 MCU 与 PID 补偿](#section-1-2)
+  * [1.3 负载突变与仿真设置](#section-1-3)
+* **[2. 小信号模型与控制框图](#section-2)**
+* **[3. 频域环路设计与阻抗分析](#section-3)**
+* **[4. 时域暂态仿真与波形分析](#section-4)**
+* **[5. 数字补偿与设计参考指南](#section-5)**
+---
+""")
+
 # ==========================================
 # MAIN PAGE - HARDWARE TOPOLOGY INPUTS
 # ==========================================
-st.write("### 🔌 核心拓扑与滤波器参数配置 (Power Stage Hardware Configuration)")
+st.markdown('<div id="section-1"></div>', unsafe_allow_html=True)
+st.write("## 1. 拓扑与参数配置 (Topology & Parameter Configurations)")
+
+st.markdown('<div id="section-1-1"></div>', unsafe_allow_html=True)
+st.write("### 🔌 1.1 核心拓扑与滤波器参数配置 (Power Stage Hardware Configuration)")
 col_hw1, col_hw2, col_hw3, col_hw4 = st.columns(4)
 
 with col_hw1:
@@ -238,7 +256,8 @@ if "fctrl" not in st.session_state:
 # ==========================================
 # MAIN PAGE - DIGITAL MCU & COMPENSATOR CONFIG
 # ==========================================
-st.write("### 💻 数字 MCU 与 PID 补偿器参数配置 (Digital MCU & Compensator Configuration)")
+st.markdown('<div id="section-1-2"></div>', unsafe_allow_html=True)
+st.write("### 💻 1.2 数字 MCU 与 PID 补偿器参数配置 (Digital MCU & Compensator Configuration)")
 
 
 col_ctrl1, col_ctrl2, col_ctrl3, col_ctrl4 = st.columns(4)
@@ -260,35 +279,41 @@ with col_ctrl4:
     tau_d = tau_d_uS * 1e-6
 
 # ==========================================
-# SIDEBAR - TESTING LOAD STEP ONLY
+# MAIN PAGE - TESTING LOAD STEP ONLY
 # ==========================================
-st.sidebar.header("🎯 负载突变参数 (Load Step)")
-scenario = st.sidebar.selectbox(
-    "负载跳变场景",
-    ["场景 1: 0% -> 60% 电流 (0A -> 98.4A)",
-     "场景 2: 40% -> 100% 电流 (65.6A -> 163.9A)",
-     "自定义负载"]
-)
+st.markdown('<div id="section-1-3"></div>', unsafe_allow_html=True)
+st.write("### 🎯 1.3 负载突变与仿真条件配置 (Load Step & Simulation Settings)")
 
-if scenario == "场景 1: 0% -> 60% 电流 (0A -> 98.4A)":
-    r_load_init = 1000.0
-    r_load_step = 12.2 / (163.93 * 0.6)
-    st.sidebar.info("初始负载: 1000.0 Ω (无载), 跳变负载: 0.124 Ω")
-elif scenario == "场景 2: 40% -> 100% 电流 (65.6A -> 163.9A)":
-    r_load_init = 12.2 / (163.93 * 0.4)
-    r_load_step = 12.2 / 163.93
-    st.sidebar.info("初始负载: 0.186 Ω (40%), 跳变负载: 0.074 Ω (100%)")
-else:
-    col_l1, col_l2 = st.sidebar.columns(2)
-    with col_l1:
-        r_load_init = st.number_input("初始负载 R_init (Ω)", min_value=0.01, max_value=1000.0, value=0.182, step=0.01)
-    with col_l2:
-        r_load_step = st.number_input("跳变负载 R_step (Ω)", min_value=0.01, max_value=1000.0, value=0.091, step=0.01)
+col_sim1, col_sim2 = st.columns(2)
 
-t_step_ms = st.sidebar.number_input("负载跳变时刻 (ms)", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
-t_step = t_step_ms * 1e-3
+with col_sim1:
+    scenario = st.selectbox(
+        "负载跳变场景",
+        ["场景 1: 0% -> 60% 电流 (0A -> 98.4A)",
+         "场景 2: 40% -> 100% 电流 (65.6A -> 163.9A)",
+         "自定义负载"]
+    )
+    
+    if scenario == "场景 1: 0% -> 60% 电流 (0A -> 98.4A)":
+        r_load_init = 1000.0
+        r_load_step = 12.2 / (163.93 * 0.6)
+        st.info("初始负载: 1000.0 Ω (无载), 跳变负载: 0.124 Ω")
+    elif scenario == "场景 2: 40% -> 100% 电流 (65.6A -> 163.9A)":
+        r_load_init = 12.2 / (163.93 * 0.4)
+        r_load_step = 12.2 / 163.93
+        st.info("初始负载: 0.186 Ω (40%), 跳变负载: 0.074 Ω (100%)")
+    else:
+        col_l1, col_l2 = st.columns(2)
+        with col_l1:
+            r_load_init = st.number_input("初始负载 R_init (Ω)", min_value=0.01, max_value=1000.0, value=0.182, step=0.01)
+        with col_l2:
+            r_load_step = st.number_input("跳变负载 R_step (Ω)", min_value=0.01, max_value=1000.0, value=0.091, step=0.01)
 
-dcm_mode = st.sidebar.checkbox("开启二极管离散仿真 (DCM 模式)", value=True, help="防止轻载下电流反向，稳定无载运行")
+with col_sim2:
+    t_step_ms = st.number_input("负载跳变时刻 (ms)", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
+    t_step = t_step_ms * 1e-3
+    
+    dcm_mode = st.checkbox("开启二极管离散仿真 (DCM 模式)", value=True, help="防止轻载下电流反向，稳定无载运行")
 
 # ==========================================
 # RUN SIMULATION AND FREQUENCY ANALYSIS
@@ -407,8 +432,9 @@ try:
         </div>
         """, unsafe_allow_html=True)
 
-    # 1. 小信号等效电路模型与控制反馈框图
-    st.write("### 📐 两相交错 Buck 小信号等效电路模型与控制反馈框图")
+    # 2. 双相交错 Buck 小信号等效电路模型与控制反馈框图
+    st.markdown('<div id="section-2"></div>', unsafe_allow_html=True)
+    st.write("## 2. 双相交错 Buck 小信号等效电路模型与控制反馈框图 (Small-Signal Equivalent Circuit & Block Diagram)")
     st.write("以下展示了本工具运行的小信号（频域环路）平均电路模型，其中电容、电阻、电感的参数大小已根据前文的物理配置进行动态计算并实时标注在对应元件旁：")
     
     # Calculate values for current working point
@@ -633,8 +659,9 @@ try:
     
     st.markdown("---")
     
-    # 2. 频域响应分析
-    st.write("### 📈 频域环路设计与阻抗特性分析 (Frequency-Domain Bode & Impedance)")
+    # 3. 频域响应分析
+    st.markdown('<div id="section-3"></div>', unsafe_allow_html=True)
+    st.write("## 3. 频域环路设计与阻抗特性分析 (Frequency-Domain Bode & Impedance)")
     st.write("以下展示了根据小信号模型线性化计算的频域特性，可查看开环/闭环波特图及输出阻抗的频率特性：")
     
     freqs = bode_res['freqs']
@@ -764,8 +791,9 @@ try:
 
     st.markdown("---")
     
-    # 3. 时域仿真与暂态响应
-    st.write("### ⏱️ 两相交错 Buck 开关级时域暂态仿真与波形分析 (Time-Domain Transient Simulation)")
+    # 4. 时域仿真与暂态响应
+    st.markdown('<div id="section-4"></div>', unsafe_allow_html=True)
+    st.write("## 4. 两相交错 Buck 开关级时域暂态仿真与波形分析 (Time-Domain Transient Simulation)")
     st.write("以下展示了非线性开关状态时域求解（龙格库塔 RK4 求解）对应的暂态波形，展现了耦合电感与数字闭环对于 $Vin=54V$ 输入、$Vref=12.2V$ 输出在负载跃变瞬态下的联合响应能力：")
     
     fig, axs = plt.subplots(3, 1, figsize=(11, 7.5), sharex=True)
@@ -824,7 +852,10 @@ try:
             delta=f"改善 {(v_min_coupled - v_min_uncoupled)/vref*100.0:.2f}% (以参考电压为基准)"
         )
         
-    # Control design explanations
+    # 5. 数字补偿与设计参考指南
+    st.markdown('<div id="section-5"></div>', unsafe_allow_html=True)
+    st.write("## 5. 数字补偿与设计参考指南 (Digital Compensation & Design Reference Guide)")
+    
     st.info("""
     💡 **数字补偿优化 Load Step 的设计方法**:
     1. **反向耦合电感对暂态的加持**: 耦合系数 $k > 0$ 使得等效暂态电感减小为 $L_{eq} = L(1-k)/2$，这比普通独立电感的等效电感 $L/2$ 更小！这可以极大地提高暂态阶段相电流的变化率 ($di/dt$)，从而大幅缩短电压恢复时间，并减小电压跌落（Undershoot）。
