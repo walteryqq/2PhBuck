@@ -182,12 +182,12 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Main Title Header
-st.markdown('<div class="main-title">⚡ 两相交错并联 Buck 耦合电感设计与控制调试系统</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">Two Phase Interleaved Buck With Coupled Inductor</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">针对反向耦合电感（Negatively Coupled Inductor）进行物理建模，并基于离散 MCU 数字控制器（ZOH、计算延迟、PI/PID 控制）进行双环/单环时域暂态仿真与频域 Bode 图环路设计。</div>', unsafe_allow_html=True)
 
 # Sidebar Navigation Index
 st.sidebar.markdown("""
-### 📑 导航索引 (Navigation Index)
+### Two Phase Interleaved Buck With Coupled Inductor
 * **[1. 拓扑与参数配置](#section-1)**
   * [1.1 核心拓扑与滤波器参数](#section-1-1)
   * [1.2 数字 MCU 与 PID 补偿](#section-1-2)
