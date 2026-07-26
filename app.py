@@ -239,7 +239,8 @@ with col_hw6:
     fs_kHz = st.number_input("开关频率 fs (kHz)", min_value=50.0, max_value=1000.0, value=210.0, step=10.0, format="%.1f")
     fs = fs_kHz * 1e3
 with col_hw7:
-    st.write("") # placeholder
+    rds_mOhm = st.number_input("半桥 GaN 等效电阻 Rds (mΩ)", min_value=0.0, max_value=20.0, value=0.6, step=0.1, format="%.2f")
+    Rds_eq = rds_mOhm * 1e-3
 with col_hw8:
     st.write("") # placeholder
 # Initialize session state for digital control parameters if not present
@@ -325,7 +326,7 @@ try:
 
     # 1. Frequency Domain Analysis (Bode)
     bode_res = bode_analysis(
-        Vin=vin, L=L, k_coupling=k_coupling, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2, Rload=r_load_step,
+        Vin=vin, L=L, k_coupling=k_coupling, Rdcr=Rdcr + 2.0 * Rds_eq, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2, Rload=r_load_step,
         Kp=kp, Ki=ki_continuous, Kd=kd, tau_d=tau_d, delay_cycles=delay_cycles, fs=fs
     )
     
@@ -333,14 +334,14 @@ try:
     t_arr, i1_arr, i2_arr, v_out_arr, i_load_arr, d1_arr, d2_arr = simulate_coupled_buck(
         Vin=vin, Vref=vref, L=L, k_coupling=k_coupling, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
         Rload_init=r_load_init, Rload_step=r_load_step, t_step=t_step,
-        fs=fs, fctrl=fctrl, Kp=kp, Ki=ki_continuous, Kd=kd, tau_d=tau_d, delay_cycles=delay_cycles, dcm_mode=dcm_mode
+        fs=fs, fctrl=fctrl, Kp=kp, Ki=ki_continuous, Kd=kd, tau_d=tau_d, delay_cycles=delay_cycles, dcm_mode=dcm_mode, Rds_eq=Rds_eq
     )
     
     # 3. Time Domain Simulation (UNCoupled benchmark for comparison)
     _, i1_un, i2_un, v_un, _, _, _ = simulate_coupled_buck(
         Vin=vin, Vref=vref, L=L, k_coupling=0.0, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
         Rload_init=r_load_init, Rload_step=r_load_step, t_step=t_step,
-        fs=fs, fctrl=fctrl, Kp=kp, Ki=ki_continuous, Kd=kd, tau_d=tau_d, delay_cycles=delay_cycles, dcm_mode=dcm_mode
+        fs=fs, fctrl=fctrl, Kp=kp, Ki=ki_continuous, Kd=kd, tau_d=tau_d, delay_cycles=delay_cycles, dcm_mode=dcm_mode, Rds_eq=Rds_eq
     )
     
     # ==========================================
@@ -871,12 +872,12 @@ try:
         # We pass vin, ol_d_fixed*vin as Vref to simulate_open_loop to set the fixed duty cycle
         t_ol, v_ol_c, i1_ol_c, i2_ol_c, _ = simulate_open_loop(
             Vin=vin, Vref=ol_d_fixed*vin, L=L, k_coupling=k_coupling, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
-            Rload_init=r_load_init, Rload_step=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs
+            Rload_init=r_load_init, Rload_step=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs, Rds_eq=Rds_eq
         )
         
         _, v_ol_un, i1_ol_un, i2_ol_un, _ = simulate_open_loop(
             Vin=vin, Vref=ol_d_fixed*vin, L=L, k_coupling=0.0, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
-            Rload_init=r_load_init, Rload_step=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs
+            Rload_init=r_load_init, Rload_step=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs, Rds_eq=Rds_eq
         )
         
         fig_ol, axs_ol = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
@@ -887,8 +888,8 @@ try:
         axs_ol[0].plot(t_ol * 1e3, v_ol_un, label="独立电感 (k=0)", color="#94A3B8", linestyle="--", linewidth=1.5)
         axs_ol[0].axhline(y=ol_d_fixed * vin, color="red", linestyle=":", label=f"空载理论电压 ({ol_d_fixed * vin:.2f}V)")
         # Calculate steady state voltage under 100% load for reference
-        # Vo = D * Vin * Rload / (Rload + Rdcr_eq)
-        vo_steady_full = (ol_d_fixed * vin) * r_load_step / (r_load_step + Rdcr/2.0)
+        # Vo = D * Vin * Rload / (Rload + Rdcr_eq + Rds_eq)
+        vo_steady_full = (ol_d_fixed * vin) * r_load_step / (r_load_step + Rdcr/2.0 + Rds_eq)
         axs_ol[0].axhline(y=vo_steady_full, color="gray", linestyle="-.", alpha=0.7, label=f"满载稳态值 ({vo_steady_full:.2f}V)")
         axs_ol[0].set_ylabel("输出电压 Vo (V)", fontsize=10, fontweight="bold")
         axs_ol[0].grid(True, linestyle=":", alpha=0.6)

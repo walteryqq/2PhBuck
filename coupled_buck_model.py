@@ -24,13 +24,15 @@ def simulate_coupled_buck(
     delay_cycles=1.5,   # MCU delay in switching cycles (computation + PWM update delay)
     t_sim=2.5e-3,        # Total simulation time (s)
     dt=None,             # Simulation time step (s)
-    dcm_mode=True        # Enable diode emulation (DCM) to prevent negative currents
+    dcm_mode=True,       # Enable diode emulation (DCM) to prevent negative currents
+    Rds_eq=0.6e-3        # Reflected GaN switch on-resistance (Ohm)
 ):
     """
     Simulates a 2-phase interleaved Buck converter with a negatively coupled inductor and two parallel capacitors.
     Uses RK4 solver and models a digital MCU PID controller with sampling delay.
     """
     # 1. Derived parameters
+    R_dcr_tot = Rdcr + 2.0 * Rds_eq  # Total loop series resistance per phase (DCR + switch Rds)
     M = k_coupling * L
     delta = L**2 - M**2
     if delta <= 0:
@@ -52,8 +54,8 @@ def simulate_coupled_buck(
         delay_steps = 0
 
     # Continuous Time coefficients
-    c_i_self = - L * Rdcr / delta
-    c_i_mut  = - M * Rdcr / delta
+    c_i_self = - L * R_dcr_tot / delta
+    c_i_mut  = - M * R_dcr_tot / delta
     c_i_vo   = - (L + M) / delta
     
     c_u_self = L / delta
@@ -294,12 +296,13 @@ def simulate_open_loop(
     Vin=12.0, Vref=1.0, L=1.0e-6, k_coupling=0.5, Rdcr=5.0e-3,
     C1=800.0e-6, Resr1=2.0e-3, C2=700.0e-6, Resr2=2.0e-3,
     Rload_init=1.0, Rload_step=0.2, t_sim=2.5e-3, t_step=1.0e-3,
-    fs=200e3
+    fs=200e3, Rds_eq=0.6e-3
 ):
     """
     Simulates the open-loop transient response of the coupled buck converter under a load step,
     while operating at a fixed, constant duty cycle (D = Vref / Vin) and 1A/us load step slew rate.
     """
+    R_dcr_tot = Rdcr + 2.0 * Rds_eq  # Total loop series resistance per phase (DCR + switch Rds)
     M = k_coupling * L
     delta = L**2 - M**2
     if delta <= 0:
@@ -346,8 +349,8 @@ def simulate_open_loop(
         v1_sw = d_fixed * Vin
         v2_sw = d_fixed * Vin
         
-        term1 = v1_sw - i1 * Rdcr - vo
-        term2 = v2_sw - i2 * Rdcr - vo
+        term1 = v1_sw - i1 * R_dcr_tot - vo
+        term2 = v2_sw - i2 * R_dcr_tot - vo
         
         di1_dt = (L * term1 - M * term2) / delta
         di2_dt = (L * term2 - M * term1) / delta
