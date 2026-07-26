@@ -480,13 +480,13 @@ try:
 <!-- 2. Dependent Current Source (IL/D * d) -->
 <circle cx="130" cy="80" r="16" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
 <path d="M 130 68 L 130 92" stroke="#0F172A" stroke-width="1.5" marker-end="url(#arrow_dark)"/>
-<text x="130" y="112" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563" text-anchor="middle">{dep_curr_str}</text>
+<text x="130" y="112" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563" text-anchor="middle">Io * d̂(s)</text>
 
 <!-- 3. Dependent Voltage Source (Vin/D^2 * d) in Series -->
 <circle cx="200" cy="45" r="16" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
 <text x="191" y="49" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0F172A" text-anchor="middle">-</text>
 <text x="209" y="49" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0F172A" text-anchor="middle">+</text>
-<text x="200" y="22" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563" text-anchor="middle">{dep_volt_str}</text>
+<text x="200" y="22" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563" text-anchor="middle">(Vin/D) * d̂(s)</text>
 
 <!-- 4. Transformer Windings (1 : D) -->
 <!-- Primary Winding -->
@@ -498,7 +498,7 @@ try:
 <!-- Secondary Winding -->
 <path d="M 288 50 C 298 55 298 65 288 70 C 298 75 298 85 288 90 C 298 95 298 105 288 110" stroke="#0F172A" stroke-width="1.8" fill="none"/>
 <circle cx="298" cy="58" r="2.5" fill="#0F172A"/>
-<text x="279" y="36" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563" text-anchor="middle">{d_ratio_str}</text>
+<text x="279" y="36" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563" text-anchor="middle">1 : D</text>
 
 <!-- Top Wires Connectors -->
 <path d="M 50 45 L 50 64" stroke="#0F172A" stroke-width="1.5"/>
@@ -515,11 +515,11 @@ try:
 <path d="M 288 45 L 310 45" stroke="#0F172A" stroke-width="1.5"/>
 <!-- Equivalent Inductor Leq -->
 <path d="M 310 45 C 318 35 326 35 326 45 C 334 35 342 35 342 45 C 350 35 358 35 358 45 C 366 35 374 35 374 45 C 382 35 390 35 390 45" stroke="#0F172A" stroke-width="1.8" fill="none"/>
-<text x="350" y="26" font-family="sans-serif" font-size="9" font-weight="bold" fill="#D97706" text-anchor="middle">{l_eq_str}</text>
+<text x="350" y="26" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#D97706" text-anchor="middle">Leq</text>
 <path d="M 390 45 L 420 45" stroke="#0F172A" stroke-width="1.5"/>
 <!-- Rdcr Resistor -->
 <path d="M 420 45 L 424 38 L 429 52 L 434 38 L 439 52 L 444 38 L 449 52 L 453 45" stroke="#0F172A" stroke-width="1.5" fill="none"/>
-<text x="445" y="26" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563" text-anchor="middle">{rdcr_eq_str}</text>
+<text x="445" y="26" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563" text-anchor="middle">Rdcr_eq</text>
 <path d="M 453 45 L 480 45" stroke="#0F172A" stroke-width="1.5"/>
 
 <!-- Capacitor Branch 1 (C1 & Resr1) -->
@@ -527,11 +527,11 @@ try:
 <!-- Capacitor C1 -->
 <line x1="468" y1="70" x2="492" y2="70" stroke="#0F172A" stroke-width="2"/>
 <line x1="468" y1="75" x2="492" y2="75" stroke="#0F172A" stroke-width="2"/>
-<text x="498" y="70" font-family="sans-serif" font-size="8" font-weight="bold" fill="#4B5563">{c1_str}</text>
+<text x="498" y="70" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">C1</text>
 <path d="M 480 75 L 480 85" stroke="#0F172A" stroke-width="1.5"/>
 <!-- Resr1 Resistor -->
 <path d="M 480 85 L 473 89 L 487 94 L 473 99 L 487 104 L 473 109 L 487 114 L 480 118" stroke="#0F172A" stroke-width="1.5" fill="none"/>
-<text x="492" y="105" font-family="sans-serif" font-size="8" font-weight="bold" fill="#4B5563">{resr1_str}</text>
+<text x="492" y="105" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">Resr1</text>
 <path d="M 480 118 L 480 130" stroke="#0F172A" stroke-width="1.5"/>
 <circle cx="480" cy="45" r="2.5" fill="#0F172A"/>
 <circle cx="480" cy="130" r="2.5" fill="#0F172A"/>
@@ -544,11 +544,11 @@ try:
 <!-- Capacitor C2 -->
 <line x1="558" y1="70" x2="582" y2="70" stroke="#0F172A" stroke-width="2"/>
 <line x1="558" y1="75" x2="582" y2="75" stroke="#0F172A" stroke-width="2"/>
-<text x="588" y="70" font-family="sans-serif" font-size="8" font-weight="bold" fill="#4B5563">{c2_str}</text>
+<text x="588" y="70" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">C2</text>
 <path d="M 570 75 L 570 85" stroke="#0F172A" stroke-width="1.5"/>
 <!-- Resr2 Resistor -->
 <path d="M 570 85 L 563 89 L 577 94 L 563 99 L 577 104 L 563 109 L 577 114 L 570 118" stroke="#0F172A" stroke-width="1.5" fill="none"/>
-<text x="582" y="105" font-family="sans-serif" font-size="8" font-weight="bold" fill="#4B5563">{resr2_str}</text>
+<text x="582" y="105" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">Resr2</text>
 <path d="M 570 118 L 570 130" stroke="#0F172A" stroke-width="1.5"/>
 <circle cx="570" cy="45" r="2.5" fill="#0F172A"/>
 <circle cx="570" cy="130" r="2.5" fill="#0F172A"/>
@@ -560,7 +560,7 @@ try:
 <path d="M 660 45 L 660 65" stroke="#0F172A" stroke-width="1.5"/>
 <!-- Rload Resistor -->
 <path d="M 660 65 L 653 69 L 667 74 L 653 79 L 667 84 L 653 89 L 667 94 L 660 98" stroke="#0F172A" stroke-width="1.5" fill="none"/>
-<text x="672" y="86" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">{r_load_str}</text>
+<text x="672" y="86" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563">R_load</text>
 <path d="M 660 98 L 660 130" stroke="#0F172A" stroke-width="1.5"/>
 <circle cx="660" cy="45" r="2.5" fill="#0F172A"/>
 <circle cx="660" cy="130" r="2.5" fill="#0F172A"/>
@@ -610,9 +610,8 @@ try:
 <!-- Combined Feedback Controller H(s) (PI/PID & Delay & PWM) -->
 <rect x="320" y="230" width="240" height="60" rx="6" fill="#EFF6FF" stroke="#3B82F6" stroke-width="2"/>
 <text x="440" y="244" font-family="sans-serif" font-size="10.5" font-weight="bold" fill="#1E3A8A" text-anchor="middle">反馈控制器 H(s)</text>
-<text x="440" y="256" font-family="sans-serif" font-size="9" fill="#1E3A8A" text-anchor="middle">Kp = {kp_val}, Ki = {ki_val}</text>
-<text x="440" y="268" font-family="sans-serif" font-size="9" fill="#1E3A8A" text-anchor="middle">Kd = {kd_val}, 1/V_M = 1</text>
-<text x="440" y="280" font-family="sans-serif" font-size="8.5" fill="#4B5563" text-anchor="middle">f_sam = {fctrl_val} kHz, 延时 = {delay_val} T_sw</text>
+<text x="440" y="258" font-family="sans-serif" font-size="9.5" fill="#1E3A8A" text-anchor="middle">Kp, Ki, Kd (数字 PID 增益)</text>
+<text x="440" y="272" font-family="sans-serif" font-size="8.5" fill="#4B5563" text-anchor="middle">采样 f_sam, 延迟 Delay</text>
 
 <!-- Duty Ratio Output d(s) feedback to the top source -->
 <path d="M 320 260 L 245 260 L 245 190 L 175 190 L 175 110" fill="none" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow_sm)"/>
