@@ -433,7 +433,7 @@ try:
     fctrl_val = f"{fctrl_kHz:.1f}"
     delay_val = f"{delay_cycles:.2f}"
     
-    small_signal_svg = f"""<svg width="860" height="320" viewBox="0 0 860 320" fill="none" xmlns="http://www.w3.org/2000/svg" style="background:#F8FAFC; border-radius:12px; border:1px solid #E2E8F0; display:block; margin: 15px auto;">
+    small_signal_svg = f"""<svg width="940" height="320" viewBox="0 0 940 320" fill="none" xmlns="http://www.w3.org/2000/svg" style="background:#F8FAFC; border-radius:12px; border:1px solid #E2E8F0; display:block; margin: 15px auto;">
 <!-- 1. AC Input Perturbation Source v_in(s) -->
 <circle cx="50" cy="80" r="16" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
 <text x="50" y="75" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0F172A" text-anchor="middle">+</text>
@@ -474,87 +474,93 @@ try:
 <path d="M 288 110 L 288 130" stroke="#0F172A" stroke-width="1.5"/>
 <path d="M 50 130 L 288 130" stroke="#0F172A" stroke-width="1.5"/>
 
-<!-- Power Filter Network (Leq & Rdcr) -->
+<!-- Rds_eq switch equivalent resistor block -->
 <path d="M 288 45 L 310 45" stroke="#0F172A" stroke-width="1.5"/>
+<rect x="310" y="37" width="50" height="16" stroke="#2563EB" fill="#EFF6FF" stroke-width="1.5" rx="2"/>
+<text x="335" y="27" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#2563EB" text-anchor="middle">Rds_eq</text>
+<text x="335" y="65" font-family="sans-serif" font-size="8" fill="#64748B" text-anchor="middle">(GaN 导通电阻折算)</text>
+<path d="M 360 45 L 380 45" stroke="#0F172A" stroke-width="1.5"/>
+
+<!-- Power Filter Network (Leq & Rdcr) (Shifted by 70px) -->
 <!-- Equivalent Inductor Leq -->
-<path d="M 310 45 C 318 35 326 35 326 45 C 334 35 342 35 342 45 C 350 35 358 35 358 45 C 366 35 374 35 374 45 C 382 35 390 35 390 45" stroke="#0F172A" stroke-width="1.8" fill="none"/>
-<text x="350" y="26" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#D97706" text-anchor="middle">Leq</text>
-<path d="M 390 45 L 420 45" stroke="#0F172A" stroke-width="1.5"/>
+<path d="M 380 45 C 388 35 396 35 396 45 C 404 35 412 35 412 45 C 420 35 428 35 428 45 C 436 35 444 35 444 45 C 452 35 460 35 460 45" stroke="#0F172A" stroke-width="1.8" fill="none"/>
+<text x="420" y="26" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#D97706" text-anchor="middle">Leq</text>
+<path d="M 460 45 L 490 45" stroke="#0F172A" stroke-width="1.5"/>
 <!-- Rdcr Resistor -->
-<path d="M 420 45 L 424 38 L 429 52 L 434 38 L 439 52 L 444 38 L 449 52 L 453 45" stroke="#0F172A" stroke-width="1.5" fill="none"/>
-<text x="445" y="26" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563" text-anchor="middle">Rdcr_eq</text>
-<path d="M 453 45 L 480 45" stroke="#0F172A" stroke-width="1.5"/>
+<path d="M 490 45 L 494 38 L 499 52 L 504 38 L 509 52 L 514 38 L 519 52 L 523 45" stroke="#0F172A" stroke-width="1.5" fill="none"/>
+<text x="506" y="26" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563" text-anchor="middle">Rdcr_eq</text>
+<path d="M 523 45 L 550 45" stroke="#0F172A" stroke-width="1.5"/>
 
 <!-- Capacitor Branch 1 (C1 & Resr1) -->
-<path d="M 480 45 L 480 70" stroke="#0F172A" stroke-width="1.5"/>
+<path d="M 550 45 L 550 70" stroke="#0F172A" stroke-width="1.5"/>
 <!-- Capacitor C1 -->
-<line x1="468" y1="70" x2="492" y2="70" stroke="#0F172A" stroke-width="2"/>
-<line x1="468" y1="75" x2="492" y2="75" stroke="#0F172A" stroke-width="2"/>
-<text x="498" y="70" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">C1</text>
-<path d="M 480 75 L 480 85" stroke="#0F172A" stroke-width="1.5"/>
+<line x1="538" y1="70" x2="562" y2="70" stroke="#0F172A" stroke-width="2"/>
+<line x1="538" y1="75" x2="562" y2="75" stroke="#0F172A" stroke-width="2"/>
+<text x="568" y="72" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">C1</text>
+<path d="M 550 75 L 550 85" stroke="#0F172A" stroke-width="1.5"/>
 <!-- Resr1 Resistor -->
-<path d="M 480 85 L 473 89 L 487 94 L 473 99 L 487 104 L 473 109 L 487 114 L 480 118" stroke="#0F172A" stroke-width="1.5" fill="none"/>
-<text x="492" y="105" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">Resr1</text>
-<path d="M 480 118 L 480 130" stroke="#0F172A" stroke-width="1.5"/>
-<circle cx="480" cy="45" r="2.5" fill="#0F172A"/>
-<circle cx="480" cy="130" r="2.5" fill="#0F172A"/>
+<path d="M 550 85 L 543 89 L 557 94 L 543 99 L 557 104 L 543 109 L 557 114 L 550 118" stroke="#0F172A" stroke-width="1.5" fill="none"/>
+<text x="562" y="105" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">Resr1</text>
+<path d="M 550 118 L 550 130" stroke="#0F172A" stroke-width="1.5"/>
+<circle cx="550" cy="45" r="2.5" fill="#0F172A"/>
+<circle cx="550" cy="130" r="2.5" fill="#0F172A"/>
 
 <!-- Wire Connect to Branch 2 -->
-<path d="M 480 45 L 570 45" stroke="#0F172A" stroke-width="1.5"/>
+<path d="M 550 45 L 640 45" stroke="#0F172A" stroke-width="1.5"/>
 
 <!-- Capacitor Branch 2 (C2 & Resr2) -->
-<path d="M 570 45 L 570 70" stroke="#0F172A" stroke-width="1.5"/>
+<path d="M 640 45 L 640 70" stroke="#0F172A" stroke-width="1.5"/>
 <!-- Capacitor C2 -->
-<line x1="558" y1="70" x2="582" y2="70" stroke="#0F172A" stroke-width="2"/>
-<line x1="558" y1="75" x2="582" y2="75" stroke="#0F172A" stroke-width="2"/>
-<text x="588" y="70" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">C2</text>
-<path d="M 570 75 L 570 85" stroke="#0F172A" stroke-width="1.5"/>
+<line x1="628" y1="70" x2="652" y2="70" stroke="#0F172A" stroke-width="2"/>
+<line x1="628" y1="75" x2="652" y2="75" stroke="#0F172A" stroke-width="2"/>
+<text x="658" y="72" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">C2</text>
+<path d="M 640 75 L 640 85" stroke="#0F172A" stroke-width="1.5"/>
 <!-- Resr2 Resistor -->
-<path d="M 570 85 L 563 89 L 577 94 L 563 99 L 577 104 L 563 109 L 577 114 L 570 118" stroke="#0F172A" stroke-width="1.5" fill="none"/>
-<text x="582" y="105" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">Resr2</text>
-<path d="M 570 118 L 570 130" stroke="#0F172A" stroke-width="1.5"/>
-<circle cx="570" cy="45" r="2.5" fill="#0F172A"/>
-<circle cx="570" cy="130" r="2.5" fill="#0F172A"/>
+<path d="M 640 85 L 633 89 L 647 94 L 633 99 L 647 104 L 633 109 L 647 114 L 640 118" stroke="#0F172A" stroke-width="1.5" fill="none"/>
+<text x="652" y="105" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">Resr2</text>
+<path d="M 640 118 L 640 130" stroke="#0F172A" stroke-width="1.5"/>
+<circle cx="640" cy="45" r="2.5" fill="#0F172A"/>
+<circle cx="640" cy="130" r="2.5" fill="#0F172A"/>
 
 <!-- Wire Connect to Load -->
-<path d="M 570 45 L 660 45" stroke="#0F172A" stroke-width="1.5"/>
+<path d="M 640 45 L 730 45" stroke="#0F172A" stroke-width="1.5"/>
 
 <!-- Output Load Resistor R_load -->
-<path d="M 660 45 L 660 65" stroke="#0F172A" stroke-width="1.5"/>
+<path d="M 730 45 L 730 65" stroke="#0F172A" stroke-width="1.5"/>
 <!-- Rload Resistor -->
-<path d="M 660 65 L 653 69 L 667 74 L 653 79 L 667 84 L 653 89 L 667 94 L 660 98" stroke="#0F172A" stroke-width="1.5" fill="none"/>
-<text x="672" y="86" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563">R_load</text>
-<path d="M 660 98 L 660 130" stroke="#0F172A" stroke-width="1.5"/>
-<circle cx="660" cy="45" r="2.5" fill="#0F172A"/>
-<circle cx="660" cy="130" r="2.5" fill="#0F172A"/>
+<path d="M 730 65 L 723 69 L 737 74 L 723 79 L 737 84 L 723 89 L 737 94 L 730 98" stroke="#0F172A" stroke-width="1.5" fill="none"/>
+<text x="742" y="86" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563">R_load</text>
+<path d="M 730 98 L 730 130" stroke="#0F172A" stroke-width="1.5"/>
+<circle cx="730" cy="45" r="2.5" fill="#0F172A"/>
+<circle cx="730" cy="130" r="2.5" fill="#0F172A"/>
 
 <!-- Wire Connect to Current Source -->
-<path d="M 660 45 L 750 45" stroke="#0F172A" stroke-width="1.5"/>
+<path d="M 730 45 L 820 45" stroke="#0F172A" stroke-width="1.5"/>
 
 <!-- Perturbation Load Current Source i_load(s) -->
-<path d="M 750 45 L 750 65" stroke="#0F172A" stroke-width="1.5"/>
-<circle cx="750" cy="80" r="15" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
-<path d="M 750 69 L 750 91" stroke="#0F172A" stroke-width="1.5" marker-end="url(#arrow_dark)"/>
-<text x="772" y="84" font-family="sans-serif" font-size="9" font-weight="bold" fill="#EF4444" text-anchor="start">î_load(s) 扰动</text>
-<path d="M 750 95 L 750 130" stroke="#0F172A" stroke-width="1.5"/>
-<circle cx="750" cy="45" r="2.5" fill="#0F172A"/>
-<circle cx="750" cy="130" r="2.5" fill="#0F172A"/>
+<path d="M 820 45 L 820 65" stroke="#0F172A" stroke-width="1.5"/>
+<circle cx="820" cy="80" r="15" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+<path d="M 820 69 L 820 91" stroke="#0F172A" stroke-width="1.5" marker-end="url(#arrow_dark)"/>
+<text x="842" y="84" font-family="sans-serif" font-size="9" font-weight="bold" fill="#EF4444" text-anchor="start">î_load(s) 扰动</text>
+<path d="M 820 95 L 820 130" stroke="#0F172A" stroke-width="1.5"/>
+<circle cx="820" cy="45" r="2.5" fill="#0F172A"/>
+<circle cx="820" cy="130" r="2.5" fill="#0F172A"/>
 
 <!-- Output terminals -->
-<path d="M 750 45 L 830 45" stroke="#0F172A" stroke-width="1.5"/>
-<circle cx="830" cy="45" r="3" fill="#0F172A"/>
-<text x="830" y="32" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0F172A" text-anchor="middle">v̂(s) 输出</text>
-<path d="M 288 130 L 830 130" stroke="#0F172A" stroke-width="1.5"/>
-<circle cx="830" cy="130" r="3" fill="#0F172A"/>
+<path d="M 820 45 L 900 45" stroke="#0F172A" stroke-width="1.5"/>
+<circle cx="900" cy="45" r="3" fill="#0F172A"/>
+<text x="900" y="32" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0F172A" text-anchor="middle">v̂(s) 输出</text>
+<path d="M 288 130 L 900 130" stroke="#0F172A" stroke-width="1.5"/>
+<circle cx="900" cy="130" r="3" fill="#0F172A"/>
 
 <!-- Open-Loop Impedance Zout arrow pointer -->
-<path d="M 680 115 L 660 100" stroke="#0F172A" stroke-width="1.5" marker-end="url(#arrow_dark)"/>
-<text x="695" y="125" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">Z_out(s)</text>
+<path d="M 750 115 L 730 100" stroke="#0F172A" stroke-width="1.5" marker-end="url(#arrow_dark)"/>
+<text x="765" y="125" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">Z_out(s)</text>
 
 <!-- ========================================================================================= -->
 <!-- 5. Closed Loop Feedback Control Block (Bottom Area) - Compensator H(s) in Forward Path -->
 <!-- Output Sensing Path to Summing Junction -->
-<path d="M 830 45 L 845 45 L 845 260 L 675 260" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow_sm)"/>
+<path d="M 900 45 L 915 45 L 915 260 L 675 260" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#arrow_sm)"/>
 
 <!-- Summing Junction (Reference - Output) -->
 <circle cx="660" cy="260" r="15" fill="#FFFFFF" stroke="#64748B" stroke-width="2"/>
@@ -600,6 +606,7 @@ try:
     st.markdown("##### 🔍 闭环小信号拓扑图元件动态参数计算结果 (Closed-Loop Dynamic Parameter Values)")
     st.write("根据当前控制与硬件参数配置，闭环小信号模型原理图中各元件在当前工作点下的真实物理计算值如下：")
     
+    r_series_eq_val = (Rdcr + 2.0 * Rds_eq) / 2.0
     col_cl_tbl1, col_cl_tbl2 = st.columns(2)
     with col_cl_tbl1:
         st.markdown(f"""
@@ -608,6 +615,7 @@ try:
         | **1 : D** | 理想变压器变比 | **1 : {d_ratio:.3f}** (稳态占空比 D = {d_ratio * 100.0:.2f} %) |
         | **(Vin/D) * d̂(s)** | 原边串联受控电压源 | **{vin / d_ratio:.1f}V * d̂(s)** (或 {vref / (d_ratio**2):.1f}V * d̂(s)) |
         | **Io * d̂(s)** | 原边并联受控电流源 | **{(vref / r_load_step):.1f}A * d̂(s)** (基于跳变点负载电流) |
+        | **Rds_eq** | 半桥 GaN 等效折算内阻 | **{Rds_eq * 1e3:.2f} m&Omega;** (DCR回路共模总电阻: {r_series_eq_val*2.0*1e3:.2f} m&Omega;) |
         | **Leq** | 等效暂态电感 $L_{{eq}}$ | **{l_eq_val * 1e6:.4f} &mu;H** (计算式: $L(1-k)/2$) |
         | **Rdcr_eq** | 等效直流电阻 | **{rdcr_eq_val * 1e3:.3f} m&Omega;** (计算式: $R_{{dcr}}/2$) |
         """)
