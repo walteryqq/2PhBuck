@@ -292,19 +292,19 @@ col_sim1, col_sim2 = st.columns(2)
 with col_sim1:
     scenario = st.selectbox(
         "负载跳变场景",
-        ["场景 1: 0% -> 60% 电流 (0A -> 98.4A)",
-         "场景 2: 40% -> 100% 电流 (65.6A -> 163.9A)",
+        ["场景 1: 0% -> 60% 电流 (0A -> 96.0A)",
+         "场景 2: 40% -> 100% 电流 (64.0A -> 160.0A)",
          "自定义负载"]
     )
     
-    if scenario == "场景 1: 0% -> 60% 电流 (0A -> 98.4A)":
+    if scenario == "场景 1: 0% -> 60% 电流 (0A -> 96.0A)":
         r_load_init = 1000.0
-        r_load_step = 12.2 / (163.93 * 0.6)
-        st.info("初始负载: 1000.0 Ω (无载), 跳变负载: 0.124 Ω")
-    elif scenario == "场景 2: 40% -> 100% 电流 (65.6A -> 163.9A)":
-        r_load_init = 12.2 / (163.93 * 0.4)
-        r_load_step = 12.2 / 163.93
-        st.info("初始负载: 0.186 Ω (40%), 跳变负载: 0.074 Ω (100%)")
+        r_load_step = 12.2 / 96.0
+        st.info("初始负载: 1000.0 Ω (无载), 跳变负载: 0.127 Ω")
+    elif scenario == "场景 2: 40% -> 100% 电流 (64.0A -> 160.0A)":
+        r_load_init = 12.2 / 64.0
+        r_load_step = 12.2 / 160.0
+        st.info("初始负载: 0.191 Ω (40%), 跳变负载: 0.076 Ω (100%)")
     else:
         col_l1, col_l2 = st.columns(2)
         with col_l1:
@@ -874,17 +874,25 @@ try:
         Rload_init=r_load_init, Rload_step=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs, Rds_eq=Rds_eq
     )
     
-    _, v_ol_un, i1_ol_un, i2_ol_un, _ = simulate_open_loop(
-        Vin=vin, Vref=ol_d_fixed*vin, L=L, k_coupling=0.0, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
-        Rload_init=r_load_init, Rload_step=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs, Rds_eq=Rds_eq
-    )
-    
+    # Reconstruct I_load array for open loop plot comparison
+    i_load_init_ol = (ol_d_fixed * vin) / r_load_init
+    i_load_target_ol = (ol_d_fixed * vin) / r_load_step
+    slew_rate = 1.0e6  # 1A/us
+    i_load_arr_ol = np.zeros(len(t_ol))
+    for step_idx in range(len(t_ol)):
+        t_val = t_ol[step_idx]
+        if t_val < ol_t_step:
+            i_load_arr_ol[step_idx] = i_load_init_ol
+        elif i_load_target_ol > i_load_init_ol:
+            i_load_arr_ol[step_idx] = min(i_load_target_ol, i_load_init_ol + slew_rate * (t_val - ol_t_step))
+        else:
+            i_load_arr_ol[step_idx] = max(i_load_target_ol, i_load_init_ol - slew_rate * (t_val - ol_t_step))
+            
     fig_ol, axs_ol = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
     plt.subplots_adjust(hspace=0.25)
     
     # Row 1: Voltage
     axs_ol[0].plot(t_ol * 1e3, v_ol_c, label=f"Coupled Inductor (k={k_coupling})", color="#1E3A8A", linewidth=2)
-    axs_ol[0].plot(t_ol * 1e3, v_ol_un, label="Uncoupled Inductor (k=0)", color="#94A3B8", linestyle="--", linewidth=1.5)
     axs_ol[0].axhline(y=ol_d_fixed * vin, color="red", linestyle=":", label=f"No-load Voltage ({ol_d_fixed * vin:.2f}V)")
     # Calculate steady state voltage under 100% load for reference
     vo_steady_full = (ol_d_fixed * vin) * r_load_step / (r_load_step + Rdcr/2.0 + Rds_eq)
@@ -895,13 +903,13 @@ try:
     axs_ol[0].set_title("Open-Loop Voltage Response to Load Step (Fixed Duty Cycle)", fontsize=11, fontweight="bold")
     
     # Row 2: Current
-    axs_ol[1].plot(t_ol * 1e3, i1_ol_c + i2_ol_c, label="Total Current - Coupled", color="#10B981", linewidth=2)
-    axs_ol[1].plot(t_ol * 1e3, i1_ol_un + i2_ol_un, label="Total Current - Uncoupled", color="#F59E0B", linestyle="--", linewidth=1.5)
+    axs_ol[1].plot(t_ol * 1e3, i1_ol_c + i2_ol_c, label="Total Inductor Current (Coupled)", color="#10B981", linewidth=2)
+    axs_ol[1].plot(t_ol * 1e3, i_load_arr_ol, label="Load Current I_load (Disturbance)", color="#EF4444", linestyle="-.", linewidth=2)
     axs_ol[1].set_ylabel("Currents (A)", fontsize=10, fontweight="bold")
     axs_ol[1].set_xlabel("Time (ms)", fontsize=10)
     axs_ol[1].grid(True, linestyle=":", alpha=0.6)
     axs_ol[1].legend(loc="upper right", framealpha=0.9)
-    axs_ol[1].set_title("Open-Loop Output Current Response under Load Step", fontsize=11, fontweight="bold")
+    axs_ol[1].set_title("Open-Loop Current Transient Comparison", fontsize=11, fontweight="bold")
     
     st.pyplot(fig_ol)
     
