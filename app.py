@@ -249,7 +249,7 @@ if "kp" not in st.session_state:
 if "ki" not in st.session_state:
     st.session_state.ki = 0.0002
 if "kd" not in st.session_state:
-    st.session_state.kd = 0.0
+    st.session_state.kd = 1.0e-6
 if "tau_d_uS" not in st.session_state:
     st.session_state.tau_d_uS = 1.0
 if "fctrl" not in st.session_state:
@@ -269,7 +269,7 @@ with col_ctrl1:
     fctrl = fctrl_kHz * 1e3
 
 with col_ctrl2:
-    delay_cycles = st.number_input("数字计算/更新延迟 (开关周期数)", min_value=0.0, max_value=6.0, value=3.15, step=0.05, format="%.2f")
+    delay_cycles = st.number_input("数字计算/更新延迟 (开关周期数)", min_value=0.0, max_value=6.0, value=1.50, step=0.05, format="%.2f")
 
 with col_ctrl3:
     kp = st.number_input("比例增益 Kp", min_value=0.0, max_value=100.0, step=1e-5, format="%.5f", key="kp")
