@@ -292,29 +292,29 @@ col_sim1, col_sim2 = st.columns(2)
 with col_sim1:
     scenario = st.selectbox(
         "负载跳变场景",
-        ["场景 1: 0% -> 60% 电流 (0A -> 96.0A)",
-         "场景 2: 40% -> 100% 电流 (64.0A -> 160.0A)",
+        ["场景 1: 0% -> 60% 电流 (0A -> 98.4A)",
+         "场景 2: 40% -> 100% 电流 (65.6A -> 163.9A)",
          "自定义负载"]
     )
     
-    if scenario == "场景 1: 0% -> 60% 电流 (0A -> 96.0A)":
+    if scenario == "场景 1: 0% -> 60% 电流 (0A -> 98.4A)":
         i_load_init = 0.0
-        i_load_target = 96.0
+        i_load_target = 163.93 * 0.6
         r_load_init = 1000.0
         r_load_step = vref / i_load_target
-        st.info("初始负载: 1000.0 Ω (无载), 跳变负载: 0.127 Ω")
-    elif scenario == "场景 2: 40% -> 100% 电流 (64.0A -> 160.0A)":
-        i_load_init = 64.0
-        i_load_target = 160.0
+        st.info("初始负载: 1000.0 Ω (无载), 跳变负载: 0.124 Ω")
+    elif scenario == "场景 2: 40% -> 100% 电流 (65.6A -> 163.9A)":
+        i_load_init = 163.93 * 0.4
+        i_load_target = 163.93
         r_load_init = vref / i_load_init
         r_load_step = vref / i_load_target
-        st.info("初始负载: 0.191 Ω (40%), 跳变负载: 0.076 Ω (100%)")
+        st.info("初始负载: 0.186 Ω (40%), 跳变负载: 0.074 Ω (100%)")
     else:
         col_l1, col_l2 = st.columns(2)
         with col_l1:
-            r_load_init = st.number_input("初始负载 R_init (Ω)", min_value=0.01, max_value=1000.0, value=0.191, step=0.01)
+            r_load_init = st.number_input("初始负载 R_init (Ω)", min_value=0.01, max_value=1000.0, value=0.186, step=0.01)
         with col_l2:
-            r_load_step = st.number_input("跳变负载 R_step (Ω)", min_value=0.01, max_value=1000.0, value=0.076, step=0.01)
+            r_load_step = st.number_input("跳变负载 R_step (Ω)", min_value=0.01, max_value=1000.0, value=0.074, step=0.01)
         i_load_init = vref / r_load_init
         i_load_target = vref / r_load_step
 
@@ -875,9 +875,12 @@ try:
         ol_t_step = st.number_input("负载突变时刻 (ms)", min_value=0.1, max_value=2.5, value=1.0, step=0.1, key="ol_t_step") * 1e-3
         
     # Run open-loop simulation under load step
+    # Run open-loop simulation under load step (64A -> 100A)
     ol_vref = ol_d_fixed * vin
-    ol_r_load_init = ol_vref / i_load_init if i_load_init > 0 else 1000.0
-    ol_r_load_step = ol_vref / i_load_target
+    ol_i_init = 64.0
+    ol_i_target = 100.0
+    ol_r_load_init = ol_vref / ol_i_init
+    ol_r_load_step = ol_vref / ol_i_target
     
     t_ol, v_ol_c, i1_ol_c, i2_ol_c, _ = simulate_open_loop(
         Vin=vin, Vref=ol_vref, L=L, k_coupling=k_coupling, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
@@ -890,11 +893,11 @@ try:
     for step_idx in range(len(t_ol)):
         t_val = t_ol[step_idx]
         if t_val < ol_t_step:
-            i_load_arr_ol[step_idx] = i_load_init
-        elif i_load_target > i_load_init:
-            i_load_arr_ol[step_idx] = min(i_load_target, i_load_init + slew_rate * (t_val - ol_t_step))
+            i_load_arr_ol[step_idx] = ol_i_init
+        elif ol_i_target > ol_i_init:
+            i_load_arr_ol[step_idx] = min(ol_i_target, ol_i_init + slew_rate * (t_val - ol_t_step))
         else:
-            i_load_arr_ol[step_idx] = max(i_load_target, i_load_init - slew_rate * (t_val - ol_t_step))
+            i_load_arr_ol[step_idx] = max(ol_i_target, ol_i_init - slew_rate * (t_val - ol_t_step))
             
     fig_ol, axs_ol = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
     plt.subplots_adjust(hspace=0.25)
