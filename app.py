@@ -298,6 +298,99 @@ i_load_init = cl_i_init
 i_load_target = cl_i_target
 
 # ==========================================
+# PID Parameter Optimizer (NEW)
+# ==========================================
+st.write("#### ⚡ PID 参数自动智能搜索与设计工具 (PID Auto-Tuning Optimizer)")
+with st.expander("🔍 点击展开 PID 智能优化辅助设计控制台 (PID Sweep & Auto-Tuning Console)", expanded=False):
+    st.markdown("通过该工具，系统自动在不同 $K_p$ 与 $K_d$ 组合下对闭环小信号平均模型进行扫描，分析环路稳定性并在稳定前提下运行暂态时域仿真，为您挑选出**跌落最小且无振铃**的最优参数组合。")
+    
+    col_opt1, col_opt2, col_opt3 = st.columns(3)
+    with col_opt1:
+        fc_max_limit_kHz = st.number_input("允许的最大穿越频率 fc_max (kHz)", min_value=1.0, max_value=100.0, value=25.0, step=1.0, key="opt_fc_max")
+    with col_opt2:
+        pm_min_limit = st.number_input("要求的最小相位裕度 PM_min (°)", min_value=10.0, max_value=90.0, value=45.0, step=5.0, key="opt_pm_min")
+    with col_opt3:
+        st.write("") # spacing
+        sweep_run = st.button("🚀 开始智能扫描优化", type="primary", use_container_width=True)
+        
+    if sweep_run:
+        kps_sweep = [0.01, 0.02, 0.03, 0.05, 0.06, 0.08, 0.10, 0.12, 0.15, 0.20, 0.25, 0.30]
+        kds_sweep = [0.0, 5e-7, 1e-6, 1.5e-6, 2e-6, 3e-6, 5e-6, 8e-6, 1e-5]
+        ki_continuous_sweep = ki * fctrl
+        
+        sweep_results = []
+        progress_bar = st.progress(0.0)
+        status_text = st.empty()
+        
+        total_iterations = len(kps_sweep) * len(kds_sweep)
+        current_iter = 0
+        
+        for kp_s in kps_sweep:
+            for kd_s in kds_sweep:
+                current_iter += 1
+                progress_bar.progress(current_iter / total_iterations)
+                status_text.text(f"正在分析组合 {current_iter}/{total_iterations}: Kp={kp_s:.3f}, Kd={kd_s:.1e}...")
+                
+                try:
+                    bode_res = bode_analysis(
+                        Vin=vin, L=L, k_coupling=k_coupling, Rdcr=Rdcr + 2.0*Rds_eq, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2, Rload=r_load_step,
+                        Kp=kp_s, Ki=ki_continuous_sweep, Kd=kd_s, tau_d=1.0e-6, delay_cycles=delay_cycles, fs=fs
+                    )
+                    pm_s = bode_res['PM']
+                    fc_s = bode_res['fc']
+                    
+                    if pm_s is not None and pm_s >= pm_min_limit:
+                        if fc_s is not None and fc_s <= fc_max_limit_kHz * 1e3:
+                            # Run fast transient simulation
+                            t_arr, i1_arr, i2_arr, v_out_arr, _, _, _ = simulate_coupled_buck(
+                                Vin=vin, Vref=vref, L=L, k_coupling=k_coupling, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
+                                Rload_init=r_load_init, Rload_step=r_load_step, t_step=t_step,
+                                fs=fs, fctrl=fctrl, Kp=kp_s, Ki=ki_continuous_sweep, Kd=kd_s, tau_d=1e-6, delay_cycles=delay_cycles, dcm_mode=dcm_mode, Rds_eq=Rds_eq,
+                                slew_rate=cl_slew_rate
+                            )
+                            v_min_s = np.min(v_out_arr)
+                            drop_mv_s = (vref - v_min_s) * 1e3
+                            sweep_results.append({
+                                '方案编号': len(sweep_results) + 1,
+                                '比例增益 Kp': kp_s,
+                                '微分增益 Kd': kd_s,
+                                '穿越频率 fc (kHz)': round(fc_s / 1e3, 2),
+                                '相位裕度 PM (°)': round(pm_s, 1),
+                                '最低电压 Vmin (V)': round(v_min_s, 4),
+                                '瞬态下冲跌落 (mV)': round(drop_mv_s, 1)
+                            })
+                except Exception as e:
+                    pass
+                    
+        progress_bar.empty()
+        status_text.empty()
+        
+        if not sweep_results:
+            st.warning("⚠️ 未找到在当前稳定性和穿越频率限制下稳定的 PID 参数组合，请放宽设计约束。")
+        else:
+            sweep_results.sort(key=lambda x: x['瞬态下冲跌落 (mV)'])
+            st.success(f"✨ 扫描完成！共找到 {len(sweep_results)} 组满足稳定约束的 PID 参数配置，已按跌落深度从小到大排序：")
+            
+            # Recalculate candidate IDs sequentially for display
+            for idx, r in enumerate(sweep_results):
+                r['方案编号'] = idx + 1
+                
+            st.dataframe(sweep_results[:15], use_container_width=True, hide_index=True)
+            
+            # Selection selectbox to apply parameters
+            options = [f"推荐方案 {r['方案编号']}: Kp={r['比例增益 Kp']:.3f}, Kd={r['微分增益 Kd']:.1e} (跌落 {r['瞬态下冲跌落 (mV)']:.1f} mV, PM={r['相位裕度 PM (°)']:.1f}°)" for r in sweep_results[:10]]
+            selected_opt = st.selectbox("选择一组合适的 PID 设计方案应用到当前系统：", options, key="selected_sweep_pid")
+            
+            if selected_opt:
+                idx = options.index(selected_opt)
+                chosen = sweep_results[idx]
+                if st.button("💾 一键应用选中方案到系统", type="secondary", use_container_width=True):
+                    st.session_state.kp = chosen['比例增益 Kp']
+                    st.session_state.kd = chosen['微分增益 Kd']
+                    st.toast(f"已应用方案 {chosen['方案编号']}: Kp={chosen['比例增益 Kp']:.4f}, Kd={chosen['微分增益 Kd']:.2e}", icon="🚀")
+                    st.rerun()
+
+# ==========================================
 # RUN SIMULATION AND FREQUENCY ANALYSIS
 # ==========================================
 try:
