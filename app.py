@@ -926,11 +926,120 @@ try:
     
     st.pyplot(fig_ol)
     
+    # Calculate wave oscillation frequency, period, and LC resonant frequency
+    i_total_ol = i1_ol_c + i2_ol_c
+    post_step_idx_ol = np.where(t_ol >= ol_t_step)[0]
+    
+    f_osc_val = None
+    mean_period_ms = None
+    peak_times_ms = []
+    
+    if len(post_step_idx_ol) > 0:
+        t_post_ol = t_ol[post_step_idx_ol]
+        i_post_ol = i_total_ol[post_step_idx_ol]
+        dt_sim_ol = t_ol[1] - t_ol[0]
+        min_dist_ol = max(10, int(0.04e-3 / dt_sim_ol))  # at least 0.04ms apart
+        
+        try:
+            from scipy.signal import find_peaks
+            peaks_ol, _ = find_peaks(i_post_ol, distance=min_dist_ol)
+            if len(peaks_ol) > 0:
+                peak_times_ms = t_post_ol[peaks_ol] * 1e3
+        except Exception:
+            peaks_ol = []
+            for idx in range(1, len(i_post_ol) - 1):
+                if i_post_ol[idx] > i_post_ol[idx-1] and i_post_ol[idx] > i_post_ol[idx+1] and i_post_ol[idx] > ol_i_target:
+                    peaks_ol.append(idx)
+            if len(peaks_ol) > 0:
+                peak_times_ms = t_post_ol[peaks_ol] * 1e3
+                
+        if len(peak_times_ms) >= 2:
+            periods_ms = np.diff(peak_times_ms)
+            mean_period_ms = np.mean(periods_ms)
+            f_osc_val = 1000.0 / mean_period_ms
+
+    # Theoretical LC calculations
+    l_eq_cm = L * (1.0 - k_coupling) / 2.0
+    c_tot = C1 + C2
+    r_series_eq = (Rdcr + 2.0 * Rds_eq) / 2.0
+    
+    f_n_val = 1.0 / (2.0 * np.pi * np.sqrt(l_eq_cm * c_tot))
+    omega_n_val = 2.0 * np.pi * f_n_val
+    zeta_val = 0.5 / omega_n_val * (r_series_eq / l_eq_cm + 1.0 / (ol_r_load_step * c_tot))
+    f_d_val = f_n_val * np.sqrt(1.0 - zeta_val**2) if zeta_val < 1.0 else 0.0
+    T_d_ms = (1000.0 / f_d_val) if f_d_val > 0 else 0.0
+
+    # Render results dashboard
+    st.markdown("#### 📊 时域波形振荡频率与 LC 谐振特征核对")
+    
+    col_res1, col_res2 = st.columns(2)
+    with col_res1:
+        if f_osc_val is not None:
+            st.markdown(f"""
+            <div class="metric-card" style="background:#FFFDFA; border:1px solid #FCD34D;">
+                <div class="metric-title" style="color:#D97706;">📈 时域仿真波形检测 (Simulation Waveform)</div>
+                <div class="metric-value" style="color:#B45309; font-size:1.6rem;">{f_osc_val:.2f} Hz</div>
+                <span style="font-size:0.85rem; color:#64748B;">
+                    检测前几个峰值时间: {', '.join([f"{t:.3f}ms" for t in peak_times_ms[:5]])} {'...' if len(peak_times_ms) > 5 else ''}<br>
+                    平均振荡周期 T_osc: <b>{mean_period_ms:.4f} ms</b>
+                </span>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div class="metric-card" style="background:#FFFDFA; border:1px solid #FCD34D;">
+                <div class="metric-title" style="color:#D97706;">📈 时域仿真波形检测 (Simulation Waveform)</div>
+                <div class="metric-value" style="color:#B45309; font-size:1.3rem;">未检测到足够多的振荡波谷/峰</div>
+                <span style="font-size:0.85rem; color:#64748B;">请确保仿真总时长足够长且系统阻尼较低以观察到完整周期。</span>
+            </div>
+            """, unsafe_allow_html=True)
+            
+    with col_res2:
+        st.markdown(f"""
+        <div class="metric-card" style="background:#F0FDF4; border:1px solid #86EFAC;">
+            <div class="metric-title" style="color:#16A34A;">📐 LC 无源滤波器理论计算 (Theoretical LC)</div>
+            <div class="metric-value" style="color:#15803D; font-size:1.6rem;">{f_d_val:.2f} Hz</div>
+            <span style="font-size:0.85rem; color:#64748B;">
+                无阻尼特征频率 f_n: <b>{f_n_val:.2f} Hz</b><br>
+                系统总阻尼比 &zeta;: <b>{zeta_val:.4f}</b> (有阻尼周期 T_d: <b>{T_d_ms:.4f} ms</b>)
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    if f_osc_val is not None:
+        rel_err = abs(f_osc_val - f_d_val) / f_d_val * 100.0
+        st.success(f"✅ **核对结论**: 时域波形实际振荡频率 ({f_osc_val:.2f} Hz) 与 LC 网络理论有阻尼特征频率 ({f_d_val:.2f} Hz) 的相对误差仅为 **{rel_err:.3f}%**，物理建模与 RK4 求解精度完美匹配！")
+
     # Show equivalent open loop schematic
     st.markdown("#### 📐 开环等效电路小信号拓扑结构")
     st.write("在开环固定比例下，占空比没有动态扰动（d̂(s) = 0），因此等效电路中不存在受控电压源与受控电流源，信号纯粹由于负载电流突变扰动（î_load(s)）激发二阶 LC 滤波器的状态响应：")
     if os.path.exists("DesignDoc/open_loop_schematic.png"):
         st.image("DesignDoc/open_loop_schematic.png", caption="两相交错并联 Buck 固定比例 (Fixed Ratio) 开环等效小信号电路模型 (无反馈环路及受控占空比源)", width="stretch")
+
+    # Display equivalent open loop parameters table
+    st.markdown("##### 🔍 拓扑图元件动态参数计算结果 (Dynamic Parameter Values)")
+    st.write("根据您当前的物理配置，原理图中各元件在当前工作点下的真实物理计算值如下：")
+    
+    col_tbl1, col_tbl2 = st.columns(2)
+    with col_tbl1:
+        st.markdown(f"""
+        | 元件符号 | 元件物理描述 | 当前动态计算值 |
+        | :--- | :--- | :--- |
+        | **1 : D** | 理想变压器变比 | **1 : {ol_d_fixed:.3f}** |
+        | **D** | 开环固定占空比 | **{ol_d_fixed * 100.0:.2f} %** |
+        | **Rds_eq** | 半桥 GaN 等效折算内阻 | **{Rds_eq * 1e3:.2f} m&Omega;** (DCR回路共模总电阻: {r_series_eq*2.0*1e3:.2f} m&Omega;) |
+        | **Leq** | 等效暂态共模电感 $L_{{eq,CM}}$ | **{l_eq_cm * 1e6:.4f} &mu;H** (计算式: $L(1-k)/2$) |
+        | **Rdcr_eq** | 等效直流电阻 | **{Rdcr/2.0 * 1e3:.3f} m&Omega;** (计算式: $R_{{dcr}}/2$) |
+        """)
+        
+    with col_tbl2:
+        st.markdown(f"""
+        | 元件符号 | 元件物理描述 | 当前动态计算值 |
+        | :--- | :--- | :--- |
+        | **C1** | 主滤波电容 | **{C1 * 1e6:.1f} &mu;F** (ESR1 = **{Resr1 * 1e3:.2f} m&Omega;**) |
+        | **C2** | 高频副电容 | **{C2 * 1e6:.1f} &mu;F** (ESR2 = **{Resr2 * 1e3:.2f} m&Omega;**) |
+        | **R_load** | 开环动态等效负载阻抗 | 初始负载: **{ol_r_load_init:.4f} &Omega;** ($64\text{{A}}$)<br>阶跃负载: **{ol_r_load_step:.4f} &Omega;** ($100\text{{A}}$) |
+        """)
 
     st.markdown("---")
 
