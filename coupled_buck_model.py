@@ -276,3 +276,78 @@ def bode_analysis(
         'gm_freq': gm_freq,
         'Leq': Leq
     }
+
+def simulate_open_loop(
+    Vin=12.0, L=1.0e-6, k_coupling=0.5, Rdcr=5.0e-3,
+    C1=800.0e-6, Resr1=2.0e-3, C2=700.0e-6, Resr2=2.0e-3,
+    Rload=1.0, t_sim=2.5e-3, t_step=1.0e-3,
+    d_init=0.1, d_step=0.2, fs=200e3
+):
+    """
+    Simulates the open-loop transient step response of the coupled buck converter.
+    Steps the duty cycle from d_init to d_step at t_step.
+    """
+    M = k_coupling * L
+    delta = L**2 - M**2
+    if delta <= 0:
+        raise ValueError("Coupling coefficient must satisfy |k| < 1.0")
+        
+    v_init = d_init * Vin
+    i_steady = (v_init / Rload) / 2.0
+    x = np.array([i_steady, i_steady, v_init, v_init])
+    
+    Tsw = 1.0 / fs
+    dt = Tsw / 200.0
+    n_steps = int(np.ceil(t_sim / dt))
+    t_arr = np.linspace(0, t_sim, n_steps)
+    
+    v_out_arr = np.zeros(n_steps)
+    i1_arr = np.zeros(n_steps)
+    i2_arr = np.zeros(n_steps)
+    d_arr = np.zeros(n_steps)
+    
+    inv_resr1 = 1.0 / Resr1
+    inv_resr2 = 1.0 / Resr2
+    
+    def derivatives(x_val, d1, d2):
+        i1, i2, vc1, vc2 = x_val
+        i_sum = i1 + i2
+        vo = (vc1 * inv_resr1 + vc2 * inv_resr2 + i_sum) / (inv_resr1 + inv_resr2 + 1.0 / Rload)
+        ic1 = (vo - vc1) / Resr1
+        ic2 = (vo - vc2) / Resr2
+        vc1_dot = ic1 / C1
+        vc2_dot = ic2 / C2
+        
+        v1_sw = d1 * Vin
+        v2_sw = d2 * Vin
+        
+        term1 = v1_sw - i1 * Rdcr - vo
+        term2 = v2_sw - i2 * Rdcr - vo
+        
+        di1_dt = (L * term1 - M * term2) / delta
+        di2_dt = (L * term2 - M * term1) / delta
+        
+        return np.array([di1_dt, di2_dt, vc1_dot, vc2_dot])
+
+    for step in range(n_steps):
+        t = t_arr[step]
+        d_val = d_init if t < t_step else d_step
+        d_arr[step] = d_val
+        
+        # Open-loop average model (Phase 1 and 2 same duty cycle)
+        d1 = d_val
+        d2 = d_val
+        
+        k1 = dt * derivatives(x, d1, d2)
+        k2 = dt * derivatives(x + 0.5 * k1, d1, d2)
+        k3 = dt * derivatives(x + 0.5 * k2, d1, d2)
+        k4 = dt * derivatives(x + k3, d1, d2)
+        x = x + (k1 + 2 * k2 + 2 * k3 + k4) / 6.0
+        
+        i_sum = x[0] + x[1]
+        vo = (x[2] * inv_resr1 + x[3] * inv_resr2 + i_sum) / (inv_resr1 + inv_resr2 + 1.0 / Rload)
+        v_out_arr[step] = vo
+        i1_arr[step] = x[0]
+        i2_arr[step] = x[1]
+        
+    return t_arr, v_out_arr, i1_arr, i2_arr, d_arr
