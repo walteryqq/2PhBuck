@@ -1038,7 +1038,7 @@ try:
         | :--- | :--- | :--- |
         | **C1** | 主滤波电容 | **{C1 * 1e6:.1f} &mu;F** (ESR1 = **{Resr1 * 1e3:.2f} m&Omega;**) |
         | **C2** | 高频副电容 | **{C2 * 1e6:.1f} &mu;F** (ESR2 = **{Resr2 * 1e3:.2f} m&Omega;**) |
-        | **R_load** | 开环动态等效负载阻抗 | 初始负载: **{ol_r_load_init:.4f} &Omega;** ($64\text{{A}}$)<br>阶跃负载: **{ol_r_load_step:.4f} &Omega;** ($100\text{{A}}$) |
+        | **R_load** | 开环动态等效负载阻抗 | 初始负载: **{ol_r_load_init:.4f} &Omega;** (64 A)<br>阶跃负载: **{ol_r_load_step:.4f} &Omega;** (100 A) |
         """)
 
     st.markdown("---")
