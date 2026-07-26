@@ -907,7 +907,7 @@ try:
         st.markdown("#### 📐 开环等效电路小信号拓扑结构")
         st.write("在开环状态下，控制反馈环路断开，相当于给功率级等效电路输入一个阶跃的占空比控制源。其电路等效模型与信号流走向如下图所示：")
         if os.path.exists("DesignDoc/open_loop_schematic.png"):
-            st.image("DesignDoc/open_loop_schematic.png", caption="两相交错并联 Buck 功率级等效小信号电路模型 (无反馈控制环路)", use_column_width=True)
+            st.image("DesignDoc/open_loop_schematic.png", caption="两相交错并联 Buck 功率级等效小信号电路模型 (无反馈控制环路)", use_container_width=True)
         
     # 5. 数字补偿与设计参考指南
     st.markdown('<div id="section-5"></div>', unsafe_allow_html=True)
