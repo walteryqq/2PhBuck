@@ -221,9 +221,9 @@ with col_hw2:
     k_coupling = st.number_input("耦合系数 k (反向耦合)", min_value=0.0, max_value=0.95, value=0.70, step=0.05, format="%.2f")
 
 with col_hw3:
-    c1_uF = st.number_input("滤波电容 C1 (μF)", min_value=10.0, max_value=10000.0, value=5000.0, step=100.0, format="%.1f")
+    c1_uF = st.number_input("滤波电容 C1 (μF)", min_value=10.0, max_value=30000.0, value=10000.0, step=100.0, format="%.1f")
     C1 = c1_uF * 1e-6
-    resr1_mOhm = st.number_input("等效电阻 ESR1 (mΩ)", min_value=0.01, max_value=50.0, value=1.0, step=0.1, format="%.2f")
+    resr1_mOhm = st.number_input("等效电阻 ESR1 (mΩ)", min_value=0.01, max_value=50.0, value=1.2, step=0.1, format="%.2f")
     Resr1 = resr1_mOhm * 1e-3
 
 with col_hw4:
