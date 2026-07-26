@@ -52,8 +52,8 @@ def draw_open_loop_schematic():
     plt.plot([tx_x + 0.1, tx_x + 0.1], [y_bot, y_top], color='#475569', lw=2)
     # core line
     plt.plot([tx_x, tx_x], [y_bot+0.2, y_top-0.2], color='#94A3B8', lw=1.5)
-    ax.text(tx_x, y_top + 0.3, '1 : 0.25', fontsize=9, fontweight='bold', color='#1E293B', ha='center')
-    ax.text(tx_x, y_bot - 0.3, '固定占空比 D = 25%', fontsize=8, color='#475569', ha='center')
+    ax.text(tx_x, y_top + 0.3, '1 : D', fontsize=9.5, fontweight='bold', color='#1E293B', ha='center')
+    ax.text(tx_x, y_bot - 0.3, '固定占空比 D', fontsize=8.5, color='#475569', ha='center')
     
     # (c) Switch Equivalent Resistor Rds_eq = 0.6 mOhm (NEW - reflected GaN switch resistance)
     rsw_start = 4.2
@@ -61,8 +61,8 @@ def draw_open_loop_schematic():
     rect_rsw = patches.Rectangle((rsw_start, y_top - 0.08), rsw_end - rsw_start, 0.16,
                                  edgecolor='#3B82F6', facecolor='#EFF6FF', lw=1.5)
     ax.add_patch(rect_rsw)
-    ax.text((rsw_start+rsw_end)/2, y_top + 0.25, 'Rds_eq = 0.6 mΩ', fontsize=8.5, fontweight='bold', color='#1D4ED8', ha='center')
-    ax.text((rsw_start+rsw_end)/2, y_top - 0.25, '(GaN 导通电阻折算)', fontsize=7, color='#1E3A8A', ha='center')
+    ax.text((rsw_start+rsw_end)/2, y_top + 0.25, 'Rds_eq', fontsize=9.5, fontweight='bold', color='#1D4ED8', ha='center')
+    ax.text((rsw_start+rsw_end)/2, y_top - 0.25, '(GaN 导通电阻折算)', fontsize=7.5, color='#1E3A8A', ha='center')
     
     # (d) Inductor Leq = 0.23 uH
     lx_start = 5.2
@@ -71,7 +71,7 @@ def draw_open_loop_schematic():
     l_x = lx_start + (lx_end - lx_start) * (l_t / (4*np.pi))
     l_y = y_top + 0.08 * np.abs(np.sin(l_t))
     plt.plot(l_x, l_y, color='#D97706', lw=2)
-    ax.text((lx_start+lx_end)/2, y_top + 0.25, 'Leq = 0.23 μH', fontsize=9, fontweight='bold', color='#B45309', ha='center')
+    ax.text((lx_start+lx_end)/2, y_top + 0.25, 'Leq', fontsize=9.5, fontweight='bold', color='#B45309', ha='center')
     
     # (e) Resistor Rdcr_eq = 0.2 mOhm
     rx_start = 6.4
@@ -79,7 +79,7 @@ def draw_open_loop_schematic():
     rect_r = patches.Rectangle((rx_start, y_top - 0.08), rx_end - rx_start, 0.16,
                                edgecolor='#475569', facecolor='#FFFFFF', lw=1.5)
     ax.add_patch(rect_r)
-    ax.text((rx_start+rx_end)/2, y_top + 0.25, 'Rdcr_eq = 0.2 mΩ', fontsize=8.5, color='#475569', ha='center')
+    ax.text((rx_start+rx_end)/2, y_top + 0.25, 'Rdcr_eq', fontsize=9.5, color='#475569', ha='center')
     
     # (f) Capacitor C1 = 5000 uF
     c1_x = 8.2
@@ -92,8 +92,8 @@ def draw_open_loop_schematic():
     ax.add_patch(rect_rc1)
     plt.plot([c1_x, c1_x], [y_bot + 0.35, y_bot], color='#475569', lw=1.5)
     plt.plot([c1_x, c1_x], [y_top - 0.45, y_bot + 0.65], color='#475569', lw=1.5)
-    ax.text(c1_x + 0.22, y_top - 0.25, 'C1 = 5000 μF', fontsize=8, color='#475569')
-    ax.text(c1_x + 0.22, y_bot + 0.45, 'Resr1 = 1.0 mΩ', fontsize=8, color='#475569')
+    ax.text(c1_x + 0.22, y_top - 0.25, 'C1', fontsize=9, color='#475569')
+    ax.text(c1_x + 0.22, y_bot + 0.45, 'Resr1', fontsize=9, color='#475569')
     
     # (g) Capacitor C2 = 100 uF
     c2_x = 9.6
@@ -106,8 +106,8 @@ def draw_open_loop_schematic():
     ax.add_patch(rect_rc2)
     plt.plot([c2_x, c2_x], [y_bot + 0.35, y_bot], color='#475569', lw=1.5)
     plt.plot([c2_x, c2_x], [y_top - 0.45, y_bot + 0.65], color='#475569', lw=1.5)
-    ax.text(c2_x + 0.22, y_top - 0.25, 'C2 = 100 μF', fontsize=8, color='#475569')
-    ax.text(c2_x + 0.22, y_bot + 0.45, 'Resr2 = 0.3 mΩ', fontsize=8, color='#475569')
+    ax.text(c2_x + 0.22, y_top - 0.25, 'C2', fontsize=9, color='#475569')
+    ax.text(c2_x + 0.22, y_bot + 0.45, 'Resr2', fontsize=9, color='#475569')
     
     # (h) Load Resistor R_load = 0.124
     rl_x = 11.0
