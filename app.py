@@ -192,7 +192,6 @@ st.sidebar.markdown("""
 * **[1. 拓扑与参数配置](#section-1)**
   * [1.1 核心拓扑与滤波器参数](#section-1-1)
   * [1.2 数字 MCU 与 PID 补偿](#section-1-2)
-  * [1.3 负载突变与仿真设置](#section-1-3)
 * **[2. 小信号模型与控制框图](#section-2)**
 * **[3. 频域环路设计与阻抗分析](#section-3)**
 * **[4. 闭环暂态仿真与波形分析](#section-4)**
@@ -923,6 +922,27 @@ try:
     axs_ol[1].set_title("Open-Loop Current Transient Comparison", fontsize=11, fontweight="bold")
     
     st.pyplot(fig_ol)
+    
+    # Calculate open-loop phase current ripple peak-to-peak
+    ol_steady_mask = (t_ol > 0.4 * ol_t_step) & (t_ol < 0.9 * ol_t_step)
+    if np.any(ol_steady_mask):
+        ol_ripple_coupled = np.max(i1_ol_c[ol_steady_mask]) - np.min(i1_ol_c[ol_steady_mask])
+    else:
+        ol_ripple_coupled = 0.0
+    ol_v_min = np.min(v_ol_c)
+    
+    st.write("#### 📊 开环稳态与动态纹波性能量化")
+    col_ol_t1, col_ol_t2 = st.columns(2)
+    with col_ol_t1:
+        st.metric(
+            label="开环相电流稳态双峰纹波 (Coupled)",
+            value=f"{ol_ripple_coupled:.3f} A"
+        )
+    with col_ol_t2:
+        st.metric(
+            label="开环负载跳变最低瞬态电压 (Coupled)",
+            value=f"{ol_v_min:.3f} V"
+        )
     
     # Calculate wave oscillation frequency, period, and LC resonant frequency
     i_total_ol = i1_ol_c + i2_ol_c
