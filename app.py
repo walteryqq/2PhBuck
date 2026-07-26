@@ -884,23 +884,23 @@ try:
         plt.subplots_adjust(hspace=0.25)
         
         # Row 1: Voltage
-        axs_ol[0].plot(t_ol * 1e3, v_ol_c, label=f"耦合电感 (k={k_coupling})", color="#1E3A8A", linewidth=2)
-        axs_ol[0].plot(t_ol * 1e3, v_ol_un, label="独立电感 (k=0)", color="#94A3B8", linestyle="--", linewidth=1.5)
-        axs_ol[0].axhline(y=ol_d_fixed * vin, color="red", linestyle=":", label=f"空载理论电压 ({ol_d_fixed * vin:.2f}V)")
+        axs_ol[0].plot(t_ol * 1e3, v_ol_c, label=f"Coupled Inductor (k={k_coupling})", color="#1E3A8A", linewidth=2)
+        axs_ol[0].plot(t_ol * 1e3, v_ol_un, label="Uncoupled Inductor (k=0)", color="#94A3B8", linestyle="--", linewidth=1.5)
+        axs_ol[0].axhline(y=ol_d_fixed * vin, color="red", linestyle=":", label=f"No-load Voltage ({ol_d_fixed * vin:.2f}V)")
         # Calculate steady state voltage under 100% load for reference
         # Vo = D * Vin * Rload / (Rload + Rdcr_eq + Rds_eq)
         vo_steady_full = (ol_d_fixed * vin) * r_load_step / (r_load_step + Rdcr/2.0 + Rds_eq)
-        axs_ol[0].axhline(y=vo_steady_full, color="gray", linestyle="-.", alpha=0.7, label=f"满载稳态值 ({vo_steady_full:.2f}V)")
-        axs_ol[0].set_ylabel("输出电压 Vo (V)", fontsize=10, fontweight="bold")
+        axs_ol[0].axhline(y=vo_steady_full, color="gray", linestyle="-.", alpha=0.7, label=f"Full-load Steady-state ({vo_steady_full:.2f}V)")
+        axs_ol[0].set_ylabel("Vo (V)", fontsize=10, fontweight="bold")
         axs_ol[0].grid(True, linestyle=":", alpha=0.6)
         axs_ol[0].legend(loc="upper right", framealpha=0.9)
         axs_ol[0].set_title("Open-Loop Voltage Response to Load Step (Fixed Duty Cycle)", fontsize=11, fontweight="bold")
         
         # Row 2: Current
-        axs_ol[1].plot(t_ol * 1e3, i1_ol_c + i2_ol_c, label="总电流 - 耦合电感", color="#10B981", linewidth=2)
-        axs_ol[1].plot(t_ol * 1e3, i1_ol_un + i2_ol_un, label="总电流 - 独立电感", color="#F59E0B", linestyle="--", linewidth=1.5)
-        axs_ol[1].set_ylabel("输出总电流 Io (A)", fontsize=10, fontweight="bold")
-        axs_ol[1].set_xlabel("时间 Time (ms)", fontsize=10)
+        axs_ol[1].plot(t_ol * 1e3, i1_ol_c + i2_ol_c, label="Total Current - Coupled", color="#10B981", linewidth=2)
+        axs_ol[1].plot(t_ol * 1e3, i1_ol_un + i2_ol_un, label="Total Current - Uncoupled", color="#F59E0B", linestyle="--", linewidth=1.5)
+        axs_ol[1].set_ylabel("Currents (A)", fontsize=10, fontweight="bold")
+        axs_ol[1].set_xlabel("Time (ms)", fontsize=10)
         axs_ol[1].grid(True, linestyle=":", alpha=0.6)
         axs_ol[1].legend(loc="upper right", framealpha=0.9)
         axs_ol[1].set_title("Open-Loop Output Current Response under Load Step", fontsize=11, fontweight="bold")
