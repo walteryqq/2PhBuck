@@ -119,7 +119,7 @@ def draw_open_loop_schematic():
                 arrowprops=dict(arrowstyle="->", color='#475569', lw=1.2))
     plt.plot([rl_x, rl_x], [y_bot, (y_top+y_bot)/2 - 0.25], color='#475569', lw=1.5)
     plt.plot([rl_x, rl_x], [y_top, (y_top+y_bot)/2 + 0.25], color='#475569', lw=1.5)
-    ax.text(rl_x + 0.22, (y_top+y_bot)/2, 'R_load = 0.124 Ω', fontsize=8.5, color='#1E293B')
+    ax.text(rl_x + 0.22, (y_top+y_bot)/2, 'R_load', fontsize=9.5, color='#1E293B')
     
     # (i) Dependent Current Source i_load(s)
     il_x = 12.4
