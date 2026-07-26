@@ -298,19 +298,25 @@ with col_sim1:
     )
     
     if scenario == "场景 1: 0% -> 60% 电流 (0A -> 96.0A)":
+        i_load_init = 0.0
+        i_load_target = 96.0
         r_load_init = 1000.0
-        r_load_step = 12.2 / 96.0
+        r_load_step = vref / i_load_target
         st.info("初始负载: 1000.0 Ω (无载), 跳变负载: 0.127 Ω")
     elif scenario == "场景 2: 40% -> 100% 电流 (64.0A -> 160.0A)":
-        r_load_init = 12.2 / 64.0
-        r_load_step = 12.2 / 160.0
+        i_load_init = 64.0
+        i_load_target = 160.0
+        r_load_init = vref / i_load_init
+        r_load_step = vref / i_load_target
         st.info("初始负载: 0.191 Ω (40%), 跳变负载: 0.076 Ω (100%)")
     else:
         col_l1, col_l2 = st.columns(2)
         with col_l1:
-            r_load_init = st.number_input("初始负载 R_init (Ω)", min_value=0.01, max_value=1000.0, value=0.182, step=0.01)
+            r_load_init = st.number_input("初始负载 R_init (Ω)", min_value=0.01, max_value=1000.0, value=0.191, step=0.01)
         with col_l2:
-            r_load_step = st.number_input("跳变负载 R_step (Ω)", min_value=0.01, max_value=1000.0, value=0.091, step=0.01)
+            r_load_step = st.number_input("跳变负载 R_step (Ω)", min_value=0.01, max_value=1000.0, value=0.076, step=0.01)
+        i_load_init = vref / r_load_init
+        i_load_target = vref / r_load_step
 
 with col_sim2:
     t_step_ms = st.number_input("负载跳变时刻 (ms)", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
@@ -869,33 +875,35 @@ try:
         ol_t_step = st.number_input("负载突变时刻 (ms)", min_value=0.1, max_value=2.5, value=1.0, step=0.1, key="ol_t_step") * 1e-3
         
     # Run open-loop simulation under load step
+    ol_vref = ol_d_fixed * vin
+    ol_r_load_init = ol_vref / i_load_init if i_load_init > 0 else 1000.0
+    ol_r_load_step = ol_vref / i_load_target
+    
     t_ol, v_ol_c, i1_ol_c, i2_ol_c, _ = simulate_open_loop(
-        Vin=vin, Vref=ol_d_fixed*vin, L=L, k_coupling=k_coupling, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
-        Rload_init=r_load_init, Rload_step=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs, Rds_eq=Rds_eq
+        Vin=vin, Vref=ol_vref, L=L, k_coupling=k_coupling, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
+        Rload_init=ol_r_load_init, Rload_step=ol_r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs, Rds_eq=Rds_eq
     )
     
     # Reconstruct I_load array for open loop plot comparison
-    i_load_init_ol = (ol_d_fixed * vin) / r_load_init
-    i_load_target_ol = (ol_d_fixed * vin) / r_load_step
     slew_rate = 1.0e6  # 1A/us
     i_load_arr_ol = np.zeros(len(t_ol))
     for step_idx in range(len(t_ol)):
         t_val = t_ol[step_idx]
         if t_val < ol_t_step:
-            i_load_arr_ol[step_idx] = i_load_init_ol
-        elif i_load_target_ol > i_load_init_ol:
-            i_load_arr_ol[step_idx] = min(i_load_target_ol, i_load_init_ol + slew_rate * (t_val - ol_t_step))
+            i_load_arr_ol[step_idx] = i_load_init
+        elif i_load_target > i_load_init:
+            i_load_arr_ol[step_idx] = min(i_load_target, i_load_init + slew_rate * (t_val - ol_t_step))
         else:
-            i_load_arr_ol[step_idx] = max(i_load_target_ol, i_load_init_ol - slew_rate * (t_val - ol_t_step))
+            i_load_arr_ol[step_idx] = max(i_load_target, i_load_init - slew_rate * (t_val - ol_t_step))
             
     fig_ol, axs_ol = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
     plt.subplots_adjust(hspace=0.25)
     
     # Row 1: Voltage
     axs_ol[0].plot(t_ol * 1e3, v_ol_c, label=f"Coupled Inductor (k={k_coupling})", color="#1E3A8A", linewidth=2)
-    axs_ol[0].axhline(y=ol_d_fixed * vin, color="red", linestyle=":", label=f"No-load Voltage ({ol_d_fixed * vin:.2f}V)")
+    axs_ol[0].axhline(y=ol_vref, color="red", linestyle=":", label=f"No-load Voltage ({ol_vref:.2f}V)")
     # Calculate steady state voltage under 100% load for reference
-    vo_steady_full = (ol_d_fixed * vin) * r_load_step / (r_load_step + Rdcr/2.0 + Rds_eq)
+    vo_steady_full = ol_vref * ol_r_load_step / (ol_r_load_step + Rdcr/2.0 + Rds_eq)
     axs_ol[0].axhline(y=vo_steady_full, color="gray", linestyle="-.", alpha=0.7, label=f"Full-load Steady-state ({vo_steady_full:.2f}V)")
     axs_ol[0].set_ylabel("Vo (V)", fontsize=10, fontweight="bold")
     axs_ol[0].grid(True, linestyle=":", alpha=0.6)
