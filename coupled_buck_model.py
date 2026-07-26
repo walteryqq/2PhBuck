@@ -351,8 +351,8 @@ def simulate_open_loop(
         term1 = v1_sw - i1 * R_dcr_tot - vo
         term2 = v2_sw - i2 * R_dcr_tot - vo
         
-        di1_dt = (L * term1 - M * term2) / delta
-        di2_dt = (L * term2 - M * term1) / delta
+        di1_dt = (L * term1 + M * term2) / delta
+        di2_dt = (L * term2 + M * term1) / delta
         
         return np.array([di1_dt, di2_dt, vc1_dot, vc2_dot])
 
