@@ -633,6 +633,32 @@ try:
 </svg>"""
     st.markdown(small_signal_svg, unsafe_allow_html=True)
     
+    # Display equivalent closed loop parameters table
+    st.markdown("##### 🔍 闭环小信号拓扑图元件动态参数计算结果 (Closed-Loop Dynamic Parameter Values)")
+    st.write("根据当前控制与硬件参数配置，闭环小信号模型原理图中各元件在当前工作点下的真实物理计算值如下：")
+    
+    col_cl_tbl1, col_cl_tbl2 = st.columns(2)
+    with col_cl_tbl1:
+        st.markdown(f"""
+        | 元件符号 | 元件物理描述 | 当前动态计算值 |
+        | :--- | :--- | :--- |
+        | **1 : D** | 理想变压器变比 | **1 : {d_ratio:.3f}** (稳态占空比 D = {d_ratio * 100.0:.2f} %) |
+        | **(Vin/D) * d̂(s)** | 原边串联受控电压源 | **{vin / d_ratio:.1f}V * d̂(s)** (或 {vref / (d_ratio**2):.1f}V * d̂(s)) |
+        | **Io * d̂(s)** | 原边并联受控电流源 | **{(vref / r_load_step):.1f}A * d̂(s)** (基于跳变点负载电流) |
+        | **Leq** | 等效暂态电感 $L_{{eq}}$ | **{l_eq_val * 1e6:.4f} &mu;H** (计算式: $L(1-k)/2$) |
+        | **Rdcr_eq** | 等效直流电阻 | **{rdcr_eq_val * 1e3:.3f} m&Omega;** (计算式: $R_{{dcr}}/2$) |
+        """)
+        
+    with col_cl_tbl2:
+        st.markdown(f"""
+        | 元件符号 | 元件物理描述 | 当前动态计算值 |
+        | :--- | :--- | :--- |
+        | **C1** | 主滤波电容 | **{C1 * 1e6:.1f} &mu;F** (ESR1 = **{Resr1 * 1e3:.2f} m&Omega;**) |
+        | **C2** | 高频副电容 | **{C2 * 1e6:.1f} &mu;F** (ESR2 = **{Resr2 * 1e3:.2f} m&Omega;**) |
+        | **R_load_init** | 初始工作点负载电阻 | **{r_load_init:.4f} &Omega;** (对应初始电流 **{i_load_init:.1f} A**) |
+        | **R_load_step** | 阶跃突变负载电阻 | **{r_load_step:.4f} &Omega;** (对应跳变电流 **{i_load_target:.1f} A**) |
+        """)
+    
     leq_uH = bode_res['Leq'] * 1e6
     rdcr_eq_mOhm = (Rdcr / 2.0) * 1e3
     delay_val_us = (delay_cycles / fs) * 1e6
@@ -1038,7 +1064,8 @@ try:
         | :--- | :--- | :--- |
         | **C1** | 主滤波电容 | **{C1 * 1e6:.1f} &mu;F** (ESR1 = **{Resr1 * 1e3:.2f} m&Omega;**) |
         | **C2** | 高频副电容 | **{C2 * 1e6:.1f} &mu;F** (ESR2 = **{Resr2 * 1e3:.2f} m&Omega;**) |
-        | **R_load** | 开环动态等效负载阻抗 | 初始负载: **{ol_r_load_init:.4f} &Omega;** (64 A)<br>阶跃负载: **{ol_r_load_step:.4f} &Omega;** (100 A) |
+        | **R_load_init** | 初始工作点负载电阻 | **{ol_r_load_init:.4f} &Omega;** (对应初始电流 **{ol_i_init:.1f} A**) |
+        | **R_load_step** | 阶跃突变负载电阻 | **{ol_r_load_step:.4f} &Omega;** (对应跳变电流 **{ol_i_target:.1f} A**) |
         """)
 
     st.markdown("---")
