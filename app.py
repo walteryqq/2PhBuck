@@ -195,8 +195,9 @@ st.sidebar.markdown("""
   * [1.3 负载突变与仿真设置](#section-1-3)
 * **[2. 小信号模型与控制框图](#section-2)**
 * **[3. 频域环路设计与阻抗分析](#section-3)**
-* **[4. 时域暂态仿真与波形分析](#section-4)**
-* **[5. 数字补偿与设计参考指南](#section-5)**
+* **[4. 闭环暂态仿真与波形分析](#section-4)**
+* **[5. 开环固定比例暂态仿真](#section-5)**
+* **[6. 数字补偿与设计参考指南](#section-6)**
 ---
 """)
 
@@ -793,129 +794,128 @@ try:
 
     st.markdown("---")
     
-    # 4. 时域仿真与暂态响应
+    # 4. 闭环时域仿真与暂态响应
     st.markdown('<div id="section-4"></div>', unsafe_allow_html=True)
-    st.write("## 4. 两相交错 Buck 开关级时域暂态仿真与波形分析 (Time-Domain Transient Simulation)")
+    st.write("## 4. 闭环开关级时域暂态仿真与波形分析 (Closed-Loop Time-Domain Transient Simulation)")
     st.write("以下展示了非线性开关状态时域求解（龙格库塔 RK4 求解）对应的暂态波形，展现了耦合电感与数字闭环对于 $Vin=54V$ 输入、$Vref=12.2V$ 输出在负载跃变瞬态下的联合响应能力：")
     
-    tab_cl, tab_ol = st.tabs(["闭环负载跃变仿真 (Closed-Loop Load Step)", "开环占空比阶跃仿真 (Open-Loop Duty Step)"])
+    fig, axs = plt.subplots(3, 1, figsize=(11, 7.5), sharex=True)
+    plt.subplots_adjust(hspace=0.25)
     
-    with tab_cl:
-        fig, axs = plt.subplots(3, 1, figsize=(11, 7.5), sharex=True)
-        plt.subplots_adjust(hspace=0.25)
-        
-        # 1. Output Voltage
-        axs[0].plot(t_arr * 1e3, v_out_arr, label=f"Coupled (k={k_coupling})", color="#1E3A8A", linewidth=2)
-        axs[0].plot(t_arr * 1e3, v_un, label="Uncoupled (k=0)", color="#94A3B8", linestyle="--", linewidth=1.5)
-        axs[0].axhline(y=vref, color="red", linestyle=":", label="Vref")
-        axs[0].axhline(y=vref*0.99, color="gray", linestyle=":", alpha=0.5)
-        axs[0].axhline(y=vref*1.01, color="gray", linestyle=":", alpha=0.5)
-        axs[0].set_ylabel("Vo (V)", fontsize=10, fontweight="bold")
-        axs[0].grid(True, linestyle=":", alpha=0.6)
-        axs[0].legend(loc="upper right", framealpha=0.9)
-        axs[0].set_title("Output Voltage Transient Response", fontsize=11, fontweight="bold")
-        
-        # 2. Phase Currents
-        axs[1].plot(t_arr * 1e3, i1_arr, label="Phase 1 (Coupled)", color="#0284C7", linewidth=1.5)
-        axs[1].plot(t_arr * 1e3, i2_arr, label="Phase 2 (Coupled)", color="#F97316", linewidth=1.5)
-        axs[1].plot(t_arr * 1e3, i1_arr + i2_arr, label="Total Output (Coupled)", color="#10B981", linewidth=2)
-        axs[1].plot(t_arr * 1e3, i1_un, label="Phase 1 (Uncoupled)", color="#CBD5E1", linestyle="--", linewidth=1)
-        axs[1].set_ylabel("Currents (A)", fontsize=10, fontweight="bold")
-        axs[1].grid(True, linestyle=":", alpha=0.6)
-        axs[1].legend(loc="upper right", framealpha=0.9, ncol=2)
-        axs[1].set_title("Phase Currents & Total Current Comparison", fontsize=11, fontweight="bold")
-        
-        # 3. Duty Cycle & Load Current
-        ax3_twin = axs[2].twinx()
-        l_sim, = axs[2].plot(t_arr * 1e3, d1_arr, label="Duty Cycle d1", color="#8B5CF6", linewidth=1.5)
-        l_load, = ax3_twin.plot(t_arr * 1e3, i_load_arr, label="Load Current I_load", color="#EF4444", linestyle="-.", linewidth=2)
-        
-        axs[2].set_ylabel("Duty Cycle", fontsize=10, fontweight="bold", color="#8B5CF6")
-        ax3_twin.set_ylabel("Load Current (A)", fontsize=10, fontweight="bold", color="#EF4444")
-        axs[2].tick_params(axis='y', labelcolor="#8B5CF6")
-        ax3_twin.tick_params(axis='y', labelcolor="#EF4444")
-        
-        axs[2].grid(True, linestyle=":", alpha=0.6)
-        axs[2].set_xlabel("Time (ms)", fontsize=10)
-        axs[2].set_title("Duty Cycle and Load Current Step Change", fontsize=11, fontweight="bold")
-        
-        st.pyplot(fig)
-        
-        # Quantities Table Comparison
-        st.write("#### 📊 稳态与动态纹波性能量化对比")
-        col_t1, col_t2 = st.columns(2)
-        with col_t1:
-            st.metric(
-                label="相电流稳态纹波 (Coupled vs. Uncoupled)",
-                value=f"{ripple_coupled:.3f} A",
-                delta=f"减少 {(ripple_uncoupled - ripple_coupled)/ripple_uncoupled*100.0:.1f}%" if ripple_uncoupled > 0 else "0%"
-            )
-        with col_t2:
-            st.metric(
-                label="负载跳变最低电压 (Coupled vs. Uncoupled)",
-                value=f"{v_min_coupled:.3f} V",
-                delta=f"改善 {(v_min_coupled - v_min_uncoupled)/vref*100.0:.2f}% (以参考电压为基准)"
-            )
-            
-    with tab_ol:
-        st.write("#### 📈 开环负载跃变响应波形 (固定占空比下的负载阶跃)")
-        st.write("在开环（固定比率，例如 D = 25.0%，即 4:1 固定变比）下，控制环路不进行任何调节（即没有占空比动态扰动 d̂(s)）。以下展示了在与闭环相同的负载突变（40% -> 100% 突变）下，系统由于 LC 二阶无源滤波器低阻尼引起的开环振铃与永久性电压跌落现象：")
-        
-        col_p1, col_p2 = st.columns(2)
-        with col_p1:
-            ol_d_fixed = st.number_input("固定占空比 D (无反馈调节)", min_value=0.0, max_value=1.0, value=vref/vin, step=0.01, format="%.3f", key="ol_d_fixed")
-        with col_p2:
-            ol_t_step = st.number_input("负载突变时刻 (ms)", min_value=0.1, max_value=2.5, value=1.0, step=0.1, key="ol_t_step") * 1e-3
-            
-        # Run open-loop simulation under load step
-        # r_load_init (40% load) to r_load_step (100% load)
-        # We pass vin, ol_d_fixed*vin as Vref to simulate_open_loop to set the fixed duty cycle
-        t_ol, v_ol_c, i1_ol_c, i2_ol_c, _ = simulate_open_loop(
-            Vin=vin, Vref=ol_d_fixed*vin, L=L, k_coupling=k_coupling, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
-            Rload_init=r_load_init, Rload_step=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs, Rds_eq=Rds_eq
+    # 1. Output Voltage
+    axs[0].plot(t_arr * 1e3, v_out_arr, label=f"Coupled (k={k_coupling})", color="#1E3A8A", linewidth=2)
+    axs[0].plot(t_arr * 1e3, v_un, label="Uncoupled (k=0)", color="#94A3B8", linestyle="--", linewidth=1.5)
+    axs[0].axhline(y=vref, color="red", linestyle=":", label="Vref")
+    axs[0].axhline(y=vref*0.99, color="gray", linestyle=":", alpha=0.5)
+    axs[0].axhline(y=vref*1.01, color="gray", linestyle=":", alpha=0.5)
+    axs[0].set_ylabel("Vo (V)", fontsize=10, fontweight="bold")
+    axs[0].grid(True, linestyle=":", alpha=0.6)
+    axs[0].legend(loc="upper right", framealpha=0.9)
+    axs[0].set_title("Output Voltage Transient Response", fontsize=11, fontweight="bold")
+    
+    # 2. Phase Currents
+    axs[1].plot(t_arr * 1e3, i1_arr, label="Phase 1 (Coupled)", color="#0284C7", linewidth=1.5)
+    axs[1].plot(t_arr * 1e3, i2_arr, label="Phase 2 (Coupled)", color="#F97316", linewidth=1.5)
+    axs[1].plot(t_arr * 1e3, i1_arr + i2_arr, label="Total Output (Coupled)", color="#10B981", linewidth=2)
+    axs[1].plot(t_arr * 1e3, i1_un, label="Phase 1 (Uncoupled)", color="#CBD5E1", linestyle="--", linewidth=1)
+    axs[1].set_ylabel("Currents (A)", fontsize=10, fontweight="bold")
+    axs[1].grid(True, linestyle=":", alpha=0.6)
+    axs[1].legend(loc="upper right", framealpha=0.9, ncol=2)
+    axs[1].set_title("Phase Currents & Total Current Comparison", fontsize=11, fontweight="bold")
+    
+    # 3. Duty Cycle & Load Current
+    ax3_twin = axs[2].twinx()
+    l_sim, = axs[2].plot(t_arr * 1e3, d1_arr, label="Duty Cycle d1", color="#8B5CF6", linewidth=1.5)
+    l_load, = ax3_twin.plot(t_arr * 1e3, i_load_arr, label="Load Current I_load", color="#EF4444", linestyle="-.", linewidth=2)
+    
+    axs[2].set_ylabel("Duty Cycle", fontsize=10, fontweight="bold", color="#8B5CF6")
+    ax3_twin.set_ylabel("Load Current (A)", fontsize=10, fontweight="bold", color="#EF4444")
+    axs[2].tick_params(axis='y', labelcolor="#8B5CF6")
+    ax3_twin.tick_params(axis='y', labelcolor="#EF4444")
+    
+    axs[2].grid(True, linestyle=":", alpha=0.6)
+    axs[2].set_xlabel("Time (ms)", fontsize=10)
+    axs[2].set_title("Duty Cycle and Load Current Step Change", fontsize=11, fontweight="bold")
+    
+    st.pyplot(fig)
+    
+    # Quantities Table Comparison
+    st.write("#### 📊 稳态与动态纹波性能量化对比")
+    col_t1, col_t2 = st.columns(2)
+    with col_t1:
+        st.metric(
+            label="相电流稳态纹波 (Coupled vs. Uncoupled)",
+            value=f"{ripple_coupled:.3f} A",
+            delta=f"减少 {(ripple_uncoupled - ripple_coupled)/ripple_uncoupled*100.0:.1f}%" if ripple_uncoupled > 0 else "0%"
         )
-        
-        _, v_ol_un, i1_ol_un, i2_ol_un, _ = simulate_open_loop(
-            Vin=vin, Vref=ol_d_fixed*vin, L=L, k_coupling=0.0, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
-            Rload_init=r_load_init, Rload_step=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs, Rds_eq=Rds_eq
+    with col_t2:
+        st.metric(
+            label="负载跳变最低电压 (Coupled vs. Uncoupled)",
+            value=f"{v_min_coupled:.3f} V",
+            delta=f"改善 {(v_min_coupled - v_min_uncoupled)/vref*100.0:.2f}% (以参考电压为基准)"
         )
-        
-        fig_ol, axs_ol = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
-        plt.subplots_adjust(hspace=0.25)
-        
-        # Row 1: Voltage
-        axs_ol[0].plot(t_ol * 1e3, v_ol_c, label=f"Coupled Inductor (k={k_coupling})", color="#1E3A8A", linewidth=2)
-        axs_ol[0].plot(t_ol * 1e3, v_ol_un, label="Uncoupled Inductor (k=0)", color="#94A3B8", linestyle="--", linewidth=1.5)
-        axs_ol[0].axhline(y=ol_d_fixed * vin, color="red", linestyle=":", label=f"No-load Voltage ({ol_d_fixed * vin:.2f}V)")
-        # Calculate steady state voltage under 100% load for reference
-        # Vo = D * Vin * Rload / (Rload + Rdcr_eq + Rds_eq)
-        vo_steady_full = (ol_d_fixed * vin) * r_load_step / (r_load_step + Rdcr/2.0 + Rds_eq)
-        axs_ol[0].axhline(y=vo_steady_full, color="gray", linestyle="-.", alpha=0.7, label=f"Full-load Steady-state ({vo_steady_full:.2f}V)")
-        axs_ol[0].set_ylabel("Vo (V)", fontsize=10, fontweight="bold")
-        axs_ol[0].grid(True, linestyle=":", alpha=0.6)
-        axs_ol[0].legend(loc="upper right", framealpha=0.9)
-        axs_ol[0].set_title("Open-Loop Voltage Response to Load Step (Fixed Duty Cycle)", fontsize=11, fontweight="bold")
-        
-        # Row 2: Current
-        axs_ol[1].plot(t_ol * 1e3, i1_ol_c + i2_ol_c, label="Total Current - Coupled", color="#10B981", linewidth=2)
-        axs_ol[1].plot(t_ol * 1e3, i1_ol_un + i2_ol_un, label="Total Current - Uncoupled", color="#F59E0B", linestyle="--", linewidth=1.5)
-        axs_ol[1].set_ylabel("Currents (A)", fontsize=10, fontweight="bold")
-        axs_ol[1].set_xlabel("Time (ms)", fontsize=10)
-        axs_ol[1].grid(True, linestyle=":", alpha=0.6)
-        axs_ol[1].legend(loc="upper right", framealpha=0.9)
-        axs_ol[1].set_title("Open-Loop Output Current Response under Load Step", fontsize=11, fontweight="bold")
-        
-        st.pyplot(fig_ol)
-        
-        # Show equivalent open loop schematic
-        st.markdown("#### 📐 开环等效电路小信号拓扑结构")
-        st.write("在开环固定比例下，占空比没有动态扰动（d̂(s) = 0），因此等效电路中不存在受控电压源与受控电流源，信号纯粹由于负载电流突变扰动（î_load(s)）激发二阶 LC 滤波器的状态响应：")
-        if os.path.exists("DesignDoc/open_loop_schematic.png"):
-            st.image("DesignDoc/open_loop_schematic.png", caption="两相交错并联 Buck 固定比例 (Fixed Ratio) 开环等效小信号电路模型 (无反馈环路及受控占空比源)", width="stretch")
-        
-    # 5. 数字补偿与设计参考指南
+
+    st.markdown("---")
+
+    # 5. 开环固定比例时域仿真与暂态响应
     st.markdown('<div id="section-5"></div>', unsafe_allow_html=True)
-    st.write("## 5. 数字补偿与设计参考指南 (Digital Compensation & Design Reference Guide)")
+    st.write("## 5. 开环固定比例负载阶跃时域暂态仿真与波形分析 (Open-Loop Fixed-Ratio Transient Simulation)")
+    st.write("在开环（固定比率，例如 D = 25.0%，即 4:1 固定变比）下，控制环路不进行任何调节（即没有占空比动态扰动 d̂(s)）。以下展示了在与闭环相同的负载突变（40% -> 100% 突变）下，系统由于 LC 二阶无源滤波器低阻尼引起的开环振铃与永久性电压跌落现象：")
+    
+    col_p1, col_p2 = st.columns(2)
+    with col_p1:
+        ol_d_fixed = st.number_input("固定占空比 D (无反馈调节)", min_value=0.0, max_value=1.0, value=vref/vin, step=0.01, format="%.3f", key="ol_d_fixed")
+    with col_p2:
+        ol_t_step = st.number_input("负载突变时刻 (ms)", min_value=0.1, max_value=2.5, value=1.0, step=0.1, key="ol_t_step") * 1e-3
+        
+    # Run open-loop simulation under load step
+    t_ol, v_ol_c, i1_ol_c, i2_ol_c, _ = simulate_open_loop(
+        Vin=vin, Vref=ol_d_fixed*vin, L=L, k_coupling=k_coupling, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
+        Rload_init=r_load_init, Rload_step=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs, Rds_eq=Rds_eq
+    )
+    
+    _, v_ol_un, i1_ol_un, i2_ol_un, _ = simulate_open_loop(
+        Vin=vin, Vref=ol_d_fixed*vin, L=L, k_coupling=0.0, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
+        Rload_init=r_load_init, Rload_step=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs, Rds_eq=Rds_eq
+    )
+    
+    fig_ol, axs_ol = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
+    plt.subplots_adjust(hspace=0.25)
+    
+    # Row 1: Voltage
+    axs_ol[0].plot(t_ol * 1e3, v_ol_c, label=f"Coupled Inductor (k={k_coupling})", color="#1E3A8A", linewidth=2)
+    axs_ol[0].plot(t_ol * 1e3, v_ol_un, label="Uncoupled Inductor (k=0)", color="#94A3B8", linestyle="--", linewidth=1.5)
+    axs_ol[0].axhline(y=ol_d_fixed * vin, color="red", linestyle=":", label=f"No-load Voltage ({ol_d_fixed * vin:.2f}V)")
+    # Calculate steady state voltage under 100% load for reference
+    vo_steady_full = (ol_d_fixed * vin) * r_load_step / (r_load_step + Rdcr/2.0 + Rds_eq)
+    axs_ol[0].axhline(y=vo_steady_full, color="gray", linestyle="-.", alpha=0.7, label=f"Full-load Steady-state ({vo_steady_full:.2f}V)")
+    axs_ol[0].set_ylabel("Vo (V)", fontsize=10, fontweight="bold")
+    axs_ol[0].grid(True, linestyle=":", alpha=0.6)
+    axs_ol[0].legend(loc="upper right", framealpha=0.9)
+    axs_ol[0].set_title("Open-Loop Voltage Response to Load Step (Fixed Duty Cycle)", fontsize=11, fontweight="bold")
+    
+    # Row 2: Current
+    axs_ol[1].plot(t_ol * 1e3, i1_ol_c + i2_ol_c, label="Total Current - Coupled", color="#10B981", linewidth=2)
+    axs_ol[1].plot(t_ol * 1e3, i1_ol_un + i2_ol_un, label="Total Current - Uncoupled", color="#F59E0B", linestyle="--", linewidth=1.5)
+    axs_ol[1].set_ylabel("Currents (A)", fontsize=10, fontweight="bold")
+    axs_ol[1].set_xlabel("Time (ms)", fontsize=10)
+    axs_ol[1].grid(True, linestyle=":", alpha=0.6)
+    axs_ol[1].legend(loc="upper right", framealpha=0.9)
+    axs_ol[1].set_title("Open-Loop Output Current Response under Load Step", fontsize=11, fontweight="bold")
+    
+    st.pyplot(fig_ol)
+    
+    # Show equivalent open loop schematic
+    st.markdown("#### 📐 开环等效电路小信号拓扑结构")
+    st.write("在开环固定比例下，占空比没有动态扰动（d̂(s) = 0），因此等效电路中不存在受控电压源与受控电流源，信号纯粹由于负载电流突变扰动（î_load(s)）激发二阶 LC 滤波器的状态响应：")
+    if os.path.exists("DesignDoc/open_loop_schematic.png"):
+        st.image("DesignDoc/open_loop_schematic.png", caption="两相交错并联 Buck 固定比例 (Fixed Ratio) 开环等效小信号电路模型 (无反馈环路及受控占空比源)", width="stretch")
+
+    st.markdown("---")
+
+    # 6. 数字补偿与设计参考指南
+    st.markdown('<div id="section-6"></div>', unsafe_allow_html=True)
+    st.write("## 6. 数字补偿与设计参考指南 (Digital Compensation & Design Reference Guide)")
     
     st.info("""
     💡 **数字补偿优化 Load Step 的设计方法**:
