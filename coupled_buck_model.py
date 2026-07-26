@@ -296,11 +296,11 @@ def simulate_open_loop(
     Vin=12.0, Vref=1.0, L=1.0e-6, k_coupling=0.5, Rdcr=5.0e-3,
     C1=800.0e-6, Resr1=2.0e-3, C2=700.0e-6, Resr2=2.0e-3,
     Rload_init=1.0, Rload_step=0.2, t_sim=2.5e-3, t_step=1.0e-3,
-    fs=200e3, Rds_eq=0.6e-3
+    fs=200e3, Rds_eq=0.6e-3, slew_rate=1.0e6
 ):
     """
     Simulates the open-loop transient response of the coupled buck converter under a load step,
-    while operating at a fixed, constant duty cycle (D = Vref / Vin) and 1A/us load step slew rate.
+    while operating at a fixed, constant duty cycle (D = Vref / Vin).
     """
     R_dcr_tot = Rdcr + 2.0 * Rds_eq  # Total loop series resistance per phase (DCR + switch Rds)
     M = k_coupling * L
@@ -311,7 +311,6 @@ def simulate_open_loop(
     d_fixed = Vref / Vin
     i_load_init = Vref / Rload_init
     i_load_target = Vref / Rload_step
-    slew_rate = 1.0e6  # 1A/us = 1e6 A/s
     
     def get_i_load(t_val):
         if t_val < t_step:

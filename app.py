@@ -868,36 +868,39 @@ try:
     st.write("## 5. 开环固定比例负载阶跃时域暂态仿真与波形分析 (Open-Loop Fixed-Ratio Transient Simulation)")
     st.write("在开环（固定比率，例如 D = 25.0%，即 4:1 固定变比）下，控制环路不进行任何调节（即没有占空比动态扰动 d̂(s)）。以下展示了在与闭环相同的负载突变（40% -> 100% 突变）下，系统由于 LC 二阶无源滤波器低阻尼引起的开环振铃与永久性电压跌落现象：")
     
-    col_p1, col_p2 = st.columns(2)
+    col_p1, col_p2, col_p3 = st.columns(3)
     with col_p1:
-        ol_d_fixed = st.number_input("固定占空比 D (无反馈调节)", min_value=0.0, max_value=1.0, value=vref/vin, step=0.01, format="%.3f", key="ol_d_fixed")
+        ol_d_fixed = st.number_input("开环固定占空比 D", min_value=0.0, max_value=1.0, value=vref/vin, step=0.01, format="%.3f", key="ol_d_fixed")
+        ol_slew_rate_val = st.number_input("开环电流变化率 (A/μs)", min_value=0.1, max_value=50.0, value=1.0, step=0.5, format="%.1f", key="ol_slew_rate_val")
+        ol_slew_rate = ol_slew_rate_val * 1e6
     with col_p2:
-        ol_t_step = st.number_input("负载突变时刻 (ms)", min_value=0.1, max_value=2.5, value=1.0, step=0.1, key="ol_t_step") * 1e-3
+        ol_i_init = st.number_input("开环初始电流 I_init (A)", min_value=0.0, max_value=500.0, value=64.0, step=1.0, format="%.1f", key="ol_i_init")
+        ol_t_step = st.number_input("开环负载跳变时刻 (ms)", min_value=0.1, max_value=10.0, value=1.0, step=0.1, key="ol_t_step") * 1e-3
+    with col_p3:
+        ol_i_target = st.number_input("开环跳变电流 I_step (A)", min_value=0.0, max_value=500.0, value=100.0, step=1.0, format="%.1f", key="ol_i_target")
+        ol_t_sim = st.number_input("开环仿真总时长 (ms)", min_value=0.2, max_value=20.0, value=2.5, step=0.5, key="ol_t_sim") * 1e-3
         
     # Run open-loop simulation under load step
-    # Run open-loop simulation under load step (64A -> 100A)
     ol_vref = ol_d_fixed * vin
-    ol_i_init = 64.0
-    ol_i_target = 100.0
-    ol_r_load_init = ol_vref / ol_i_init
+    ol_r_load_init = ol_vref / ol_i_init if ol_i_init > 0 else 1000.0
     ol_r_load_step = ol_vref / ol_i_target
     
     t_ol, v_ol_c, i1_ol_c, i2_ol_c, _ = simulate_open_loop(
         Vin=vin, Vref=ol_vref, L=L, k_coupling=k_coupling, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
-        Rload_init=ol_r_load_init, Rload_step=ol_r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs, Rds_eq=Rds_eq
+        Rload_init=ol_r_load_init, Rload_step=ol_r_load_step, t_sim=ol_t_sim, t_step=ol_t_step, fs=fs, Rds_eq=Rds_eq,
+        slew_rate=ol_slew_rate
     )
     
     # Reconstruct I_load array for open loop plot comparison
-    slew_rate = 1.0e6  # 1A/us
     i_load_arr_ol = np.zeros(len(t_ol))
     for step_idx in range(len(t_ol)):
         t_val = t_ol[step_idx]
         if t_val < ol_t_step:
             i_load_arr_ol[step_idx] = ol_i_init
         elif ol_i_target > ol_i_init:
-            i_load_arr_ol[step_idx] = min(ol_i_target, ol_i_init + slew_rate * (t_val - ol_t_step))
+            i_load_arr_ol[step_idx] = min(ol_i_target, ol_i_init + ol_slew_rate * (t_val - ol_t_step))
         else:
-            i_load_arr_ol[step_idx] = max(ol_i_target, ol_i_init - slew_rate * (t_val - ol_t_step))
+            i_load_arr_ol[step_idx] = max(ol_i_target, ol_i_init - ol_slew_rate * (t_val - ol_t_step))
             
     fig_ol, axs_ol = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
     plt.subplots_adjust(hspace=0.25)
