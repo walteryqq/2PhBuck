@@ -286,7 +286,7 @@ with col_ctrl4:
 # ==========================================
 # Retrieve closed-loop simulation settings from session state (defined in Section 4)
 cl_i_init = st.session_state.get("cl_i_init", 64.0)
-cl_i_target = st.session_state.get("cl_i_target", 100.0)
+cl_i_target = st.session_state.get("cl_i_target", 160.0)
 cl_slew_rate_val = st.session_state.get("cl_slew_rate_val", 1.0)
 cl_slew_rate = cl_slew_rate_val * 1e6
 cl_t_step_val = st.session_state.get("cl_t_step", 1.00)
@@ -811,7 +811,7 @@ try:
         st.number_input("闭环初始电流 I_init (A)", min_value=0.0, max_value=500.0, value=64.0, step=1.0, format="%.1f", key="cl_i_init")
         st.number_input("闭环电流变化率 (A/μs)", min_value=0.1, max_value=50.0, value=1.0, step=0.5, format="%.1f", key="cl_slew_rate_val")
     with col_cl2:
-        st.number_input("闭环跳变电流 I_step (A)", min_value=0.0, max_value=500.0, value=100.0, step=1.0, format="%.1f", key="cl_i_target")
+        st.number_input("闭环跳变目标电流 I_step (最终值/A)", min_value=0.0, max_value=500.0, value=160.0, step=1.0, format="%.1f", key="cl_i_target")
         st.number_input("闭环负载跳变时刻 (ms)", min_value=0.05, max_value=10.0, value=1.0, step=0.05, format="%.2f", key="cl_t_step")
     with col_cl3:
         st.checkbox("开启二极管离散仿真 (DCM 模式)", value=True, key="cl_dcm_mode", help="防止轻载下电流反向，稳定无载运行")
@@ -890,7 +890,7 @@ try:
         ol_i_init = st.number_input("开环初始电流 I_init (A)", min_value=0.0, max_value=500.0, value=64.0, step=1.0, format="%.1f", key="ol_i_init")
         ol_t_step = st.number_input("开环负载跳变时刻 (ms)", min_value=0.05, max_value=10.0, value=0.1, step=0.05, format="%.2f", key="ol_t_step") * 1e-3
     with col_p3:
-        ol_i_target = st.number_input("开环跳变电流 I_step (A)", min_value=0.0, max_value=500.0, value=100.0, step=1.0, format="%.1f", key="ol_i_target")
+        ol_i_target = st.number_input("开环跳变目标电流 I_step (最终值/A)", min_value=0.0, max_value=500.0, value=160.0, step=1.0, format="%.1f", key="ol_i_target")
         ol_t_sim = st.number_input("开环仿真总时长 (ms)", min_value=0.2, max_value=20.0, value=2.5, step=0.5, key="ol_t_sim") * 1e-3
         
     # Run open-loop simulation under load step
