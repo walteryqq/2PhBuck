@@ -284,45 +284,19 @@ with col_ctrl4:
 # ==========================================
 # MAIN PAGE - TESTING LOAD STEP ONLY
 # ==========================================
-st.markdown('<div id="section-1-3"></div>', unsafe_allow_html=True)
-st.write("### 🎯 1.3 负载突变与仿真条件配置 (Load Step & Simulation Settings)")
+# Retrieve closed-loop simulation settings from session state (defined in Section 4)
+cl_i_init = st.session_state.get("cl_i_init", 64.0)
+cl_i_target = st.session_state.get("cl_i_target", 100.0)
+cl_slew_rate_val = st.session_state.get("cl_slew_rate_val", 1.0)
+cl_slew_rate = cl_slew_rate_val * 1e6
+cl_t_step_val = st.session_state.get("cl_t_step", 1.00)
+t_step = cl_t_step_val * 1e-3
+dcm_mode = st.session_state.get("cl_dcm_mode", True)
 
-col_sim1, col_sim2 = st.columns(2)
-
-with col_sim1:
-    scenario = st.selectbox(
-        "负载跳变场景",
-        ["场景 1: 0% -> 60% 电流 (0A -> 98.4A)",
-         "场景 2: 40% -> 100% 电流 (65.6A -> 163.9A)",
-         "自定义负载"]
-    )
-    
-    if scenario == "场景 1: 0% -> 60% 电流 (0A -> 98.4A)":
-        i_load_init = 0.0
-        i_load_target = 163.93 * 0.6
-        r_load_init = 1000.0
-        r_load_step = vref / i_load_target
-        st.info("初始负载: 1000.0 Ω (无载), 跳变负载: 0.124 Ω")
-    elif scenario == "场景 2: 40% -> 100% 电流 (65.6A -> 163.9A)":
-        i_load_init = 163.93 * 0.4
-        i_load_target = 163.93
-        r_load_init = vref / i_load_init
-        r_load_step = vref / i_load_target
-        st.info("初始负载: 0.186 Ω (40%), 跳变负载: 0.074 Ω (100%)")
-    else:
-        col_l1, col_l2 = st.columns(2)
-        with col_l1:
-            r_load_init = st.number_input("初始负载 R_init (Ω)", min_value=0.01, max_value=1000.0, value=0.186, step=0.01)
-        with col_l2:
-            r_load_step = st.number_input("跳变负载 R_step (Ω)", min_value=0.01, max_value=1000.0, value=0.074, step=0.01)
-        i_load_init = vref / r_load_init
-        i_load_target = vref / r_load_step
-
-with col_sim2:
-    t_step_ms = st.number_input("负载跳变时刻 (ms)", min_value=0.1, max_value=10.0, value=1.0, step=0.1)
-    t_step = t_step_ms * 1e-3
-    
-    dcm_mode = st.checkbox("开启二极管离散仿真 (DCM 模式)", value=True, help="防止轻载下电流反向，稳定无载运行")
+r_load_init = vref / cl_i_init if cl_i_init > 0 else 1000.0
+r_load_step = vref / cl_i_target
+i_load_init = cl_i_init
+i_load_target = cl_i_target
 
 # ==========================================
 # RUN SIMULATION AND FREQUENCY ANALYSIS
@@ -341,14 +315,16 @@ try:
     t_arr, i1_arr, i2_arr, v_out_arr, i_load_arr, d1_arr, d2_arr = simulate_coupled_buck(
         Vin=vin, Vref=vref, L=L, k_coupling=k_coupling, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
         Rload_init=r_load_init, Rload_step=r_load_step, t_step=t_step,
-        fs=fs, fctrl=fctrl, Kp=kp, Ki=ki_continuous, Kd=kd, tau_d=tau_d, delay_cycles=delay_cycles, dcm_mode=dcm_mode, Rds_eq=Rds_eq
+        fs=fs, fctrl=fctrl, Kp=kp, Ki=ki_continuous, Kd=kd, tau_d=tau_d, delay_cycles=delay_cycles, dcm_mode=dcm_mode, Rds_eq=Rds_eq,
+        slew_rate=cl_slew_rate
     )
     
     # 3. Time Domain Simulation (UNCoupled benchmark for comparison)
     _, i1_un, i2_un, v_un, _, _, _ = simulate_coupled_buck(
         Vin=vin, Vref=vref, L=L, k_coupling=0.0, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
         Rload_init=r_load_init, Rload_step=r_load_step, t_step=t_step,
-        fs=fs, fctrl=fctrl, Kp=kp, Ki=ki_continuous, Kd=kd, tau_d=tau_d, delay_cycles=delay_cycles, dcm_mode=dcm_mode, Rds_eq=Rds_eq
+        fs=fs, fctrl=fctrl, Kp=kp, Ki=ki_continuous, Kd=kd, tau_d=tau_d, delay_cycles=delay_cycles, dcm_mode=dcm_mode, Rds_eq=Rds_eq,
+        slew_rate=cl_slew_rate
     )
     
     # ==========================================
@@ -829,6 +805,18 @@ try:
     st.markdown('<div id="section-4"></div>', unsafe_allow_html=True)
     st.write("## 4. 闭环开关级时域暂态仿真与波形分析 (Closed-Loop Time-Domain Transient Simulation)")
     st.write("以下展示了非线性开关状态时域求解（龙格库塔 RK4 求解）对应的暂态波形，展现了耦合电感与数字闭环对于 $Vin=54V$ 输入、$Vref=12.2V$ 输出在负载跃变瞬态下的联合响应能力：")
+    
+    col_cl1, col_cl2, col_cl3 = st.columns(3)
+    with col_cl1:
+        st.number_input("闭环初始电流 I_init (A)", min_value=0.0, max_value=500.0, value=64.0, step=1.0, format="%.1f", key="cl_i_init")
+        st.number_input("闭环电流变化率 (A/μs)", min_value=0.1, max_value=50.0, value=1.0, step=0.5, format="%.1f", key="cl_slew_rate_val")
+    with col_cl2:
+        st.number_input("闭环跳变电流 I_step (A)", min_value=0.0, max_value=500.0, value=100.0, step=1.0, format="%.1f", key="cl_i_target")
+        st.number_input("闭环负载跳变时刻 (ms)", min_value=0.05, max_value=10.0, value=1.0, step=0.05, format="%.2f", key="cl_t_step")
+    with col_cl3:
+        st.checkbox("开启二极管离散仿真 (DCM 模式)", value=True, key="cl_dcm_mode", help="防止轻载下电流反向，稳定无载运行")
+        
+    st.write("")
     
     fig, axs = plt.subplots(3, 1, figsize=(11, 7.5), sharex=True)
     plt.subplots_adjust(hspace=0.25)

@@ -25,7 +25,8 @@ def simulate_coupled_buck(
     t_sim=2.5e-3,        # Total simulation time (s)
     dt=None,             # Simulation time step (s)
     dcm_mode=True,       # Enable diode emulation (DCM) to prevent negative currents
-    Rds_eq=0.6e-3        # Reflected GaN switch on-resistance (Ohm)
+    Rds_eq=0.6e-3,       # Reflected GaN switch on-resistance (Ohm)
+    slew_rate=1.0e6      # Load current slew rate (A/s)
 ):
     """
     Simulates a 2-phase interleaved Buck converter with a negatively coupled inductor and two parallel capacitors.
@@ -65,7 +66,6 @@ def simulate_coupled_buck(
     # x = [i1, i2, vc1, vc2]^T
     i_load_init = Vref / Rload_init
     i_load_target = Vref / Rload_step
-    slew_rate = 1.0e6  # 1A/us = 1e6 A/s
     
     def get_i_load(t_val):
         if t_val < t_step:
