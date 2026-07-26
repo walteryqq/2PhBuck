@@ -319,14 +319,6 @@ try:
         slew_rate=cl_slew_rate
     )
     
-    # 3. Time Domain Simulation (UNCoupled benchmark for comparison)
-    _, i1_un, i2_un, v_un, _, _, _ = simulate_coupled_buck(
-        Vin=vin, Vref=vref, L=L, k_coupling=0.0, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
-        Rload_init=r_load_init, Rload_step=r_load_step, t_step=t_step,
-        fs=fs, fctrl=fctrl, Kp=kp, Ki=ki_continuous, Kd=kd, tau_d=tau_d, delay_cycles=delay_cycles, dcm_mode=dcm_mode, Rds_eq=Rds_eq,
-        slew_rate=cl_slew_rate
-    )
-    
     # ==========================================
     # METRICS SECTION
     # ==========================================
@@ -336,8 +328,6 @@ try:
     # Vo undershoot
     v_min_coupled = np.min(v_out_arr)
     undershoot_pct_coupled = (vref - v_min_coupled) / vref * 100.0
-    v_min_uncoupled = np.min(v_un)
-    undershoot_pct_uncoupled = (vref - v_min_uncoupled) / vref * 100.0
     
     # Settling time (time to return within 1% of Vref after t_step)
     t_after_step = t_arr[t_arr >= t_step]
@@ -358,10 +348,8 @@ try:
     steady_mask = (t_arr > 0.4 * t_step) & (t_arr < 0.9 * t_step)
     if np.any(steady_mask):
         ripple_coupled = np.max(i1_arr[steady_mask]) - np.min(i1_arr[steady_mask])
-        ripple_uncoupled = np.max(i1_un[steady_mask]) - np.min(i1_un[steady_mask])
     else:
         ripple_coupled = 0.0
-        ripple_uncoupled = 0.0
 
     # Layout Metrics in 4 columns
     m_col1, m_col2, m_col3, m_col4 = st.columns(4)
@@ -413,7 +401,7 @@ try:
         <div class="metric-card">
             <div class="metric-title">负载突变瞬态电压跌落</div>
             <div class="metric-value">{undershoot_pct_coupled:.2f} %</div>
-            <span style="font-size: 0.85rem; color:#64748B;">无耦合时为 {undershoot_pct_uncoupled:.2f}%<br>恢复时间: {settling_time_ms}</span>
+            <span style="font-size: 0.85rem; color:#64748B;">最大瞬态跌落电压: {vref - v_min_coupled:.3f} V<br>恢复时间: {settling_time_ms}</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -823,7 +811,6 @@ try:
     
     # 1. Output Voltage
     axs[0].plot(t_arr * 1e3, v_out_arr, label=f"Coupled (k={k_coupling})", color="#1E3A8A", linewidth=2)
-    axs[0].plot(t_arr * 1e3, v_un, label="Uncoupled (k=0)", color="#94A3B8", linestyle="--", linewidth=1.5)
     axs[0].axhline(y=vref, color="red", linestyle=":", label="Vref")
     axs[0].axhline(y=vref*0.99, color="gray", linestyle=":", alpha=0.5)
     axs[0].axhline(y=vref*1.01, color="gray", linestyle=":", alpha=0.5)
@@ -836,7 +823,6 @@ try:
     axs[1].plot(t_arr * 1e3, i1_arr, label="Phase 1 (Coupled)", color="#0284C7", linewidth=1.5)
     axs[1].plot(t_arr * 1e3, i2_arr, label="Phase 2 (Coupled)", color="#F97316", linewidth=1.5)
     axs[1].plot(t_arr * 1e3, i1_arr + i2_arr, label="Total Output (Coupled)", color="#10B981", linewidth=2)
-    axs[1].plot(t_arr * 1e3, i1_un, label="Phase 1 (Uncoupled)", color="#CBD5E1", linestyle="--", linewidth=1)
     axs[1].set_ylabel("Currents (A)", fontsize=10, fontweight="bold")
     axs[1].grid(True, linestyle=":", alpha=0.6)
     axs[1].legend(loc="upper right", framealpha=0.9, ncol=2)
@@ -859,19 +845,17 @@ try:
     st.pyplot(fig)
     
     # Quantities Table Comparison
-    st.write("#### 📊 稳态与动态纹波性能量化对比")
+    st.write("#### 📊 稳态与动态纹波性能量化")
     col_t1, col_t2 = st.columns(2)
     with col_t1:
         st.metric(
-            label="相电流稳态纹波 (Coupled vs. Uncoupled)",
-            value=f"{ripple_coupled:.3f} A",
-            delta=f"减少 {(ripple_uncoupled - ripple_coupled)/ripple_uncoupled*100.0:.1f}%" if ripple_uncoupled > 0 else "0%"
+            label="相电流稳态双峰纹波 (Coupled)",
+            value=f"{ripple_coupled:.3f} A"
         )
     with col_t2:
         st.metric(
-            label="负载跳变最低电压 (Coupled vs. Uncoupled)",
-            value=f"{v_min_coupled:.3f} V",
-            delta=f"改善 {(v_min_coupled - v_min_uncoupled)/vref*100.0:.2f}% (以参考电压为基准)"
+            label="负载跳变最低瞬态电压 (Coupled)",
+            value=f"{v_min_coupled:.3f} V"
         )
 
     st.markdown("---")
