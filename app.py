@@ -910,7 +910,7 @@ try:
         st.markdown("#### 📐 开环等效电路小信号拓扑结构")
         st.write("在开环固定比例下，占空比没有动态扰动（d̂(s) = 0），因此等效电路中不存在受控电压源与受控电流源，信号纯粹由于负载电流突变扰动（î_load(s)）激发二阶 LC 滤波器的状态响应：")
         if os.path.exists("DesignDoc/open_loop_schematic.png"):
-            st.image("DesignDoc/open_loop_schematic.png", caption="两相交错并联 Buck 固定比例 (Fixed Ratio) 开环等效小信号电路模型 (无反馈环路及受控占空比源)", use_container_width=True)
+            st.image("DesignDoc/open_loop_schematic.png", caption="两相交错并联 Buck 固定比例 (Fixed Ratio) 开环等效小信号电路模型 (无反馈环路及受控占空比源)", width="stretch")
         
     # 5. 数字补偿与设计参考指南
     st.markdown('<div id="section-5"></div>', unsafe_allow_html=True)
