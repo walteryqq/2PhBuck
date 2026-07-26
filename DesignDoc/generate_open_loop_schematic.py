@@ -7,14 +7,14 @@ def draw_open_loop_schematic():
     plt.rcParams['font.sans-serif'] = ['STHeiti', 'PingFang SC', 'Heiti TC', 'Arial Unicode MS', 'sans-serif']
     plt.rcParams['axes.unicode_minus'] = False
     
-    # Canvas size matching the closed-loop one, using 12x4 for spacious layout
-    fig, ax = plt.subplots(figsize=(12, 4.0))
+    # Canvas size matching the closed-loop one
+    fig, ax = plt.subplots(figsize=(12, 3.2))
     ax.set_xlim(0, 11.5)
-    ax.set_ylim(1.0, 4.2)
+    ax.set_ylim(1.2, 4.2)
     ax.axis('off')
     
     # Title
-    ax.text(5.75, 4.0, '两相交错并联 Buck 开关级小信号开环等效电路模型', fontsize=11, fontweight='bold', color='#1E3A8A', ha='center')
+    ax.text(5.75, 4.0, '两相交错并联 Buck 固定比例 (Fixed 4:1 Ratio) 开环等效小信号电路模型', fontsize=11, fontweight='bold', color='#1E3A8A', ha='center')
     
     # ---------------------------------------------------------
     # 1. Main Power Stage Rails (y = 3.2 is top, y = 1.8 is bottom)
@@ -24,9 +24,8 @@ def draw_open_loop_schematic():
     
     # Bottom rail (Ground)
     plt.plot([0.8, 11.2], [y_bot, y_bot], color='#475569', lw=1.5)
-    # Top rail sections
-    plt.plot([0.8, 2.55], [y_top, y_top], color='#475569', lw=1.5)
-    plt.plot([3.05, 3.6], [y_top, y_top], color='#475569', lw=1.5)
+    # Top rail sections (connected straight from input source to transformer)
+    plt.plot([0.8, 3.6], [y_top, y_top], color='#475569', lw=1.5)
     plt.plot([4.0, 4.5], [y_top, y_top], color='#475569', lw=1.5)
     plt.plot([5.5, 5.8], [y_top, y_top], color='#475569', lw=1.5)
     plt.plot([6.4, 11.2], [y_top, y_top], color='#475569', lw=1.5)
@@ -44,26 +43,7 @@ def draw_open_loop_schematic():
     plt.plot([src_x, src_x], [y_top, (y_top+y_bot)/2 + 0.25], color='#475569', lw=1.5)
     ax.text(src_x - 0.35, (y_top+y_bot)/2, 'v̂_in(s)', fontsize=9.5, fontweight='bold', color='#1E293B', ha='right', va='center')
     
-    # (b) Dependent Current Source 98.4A * d(s)
-    cs_x = 1.8
-    circle_cs = patches.Circle((cs_x, (y_top+y_bot)/2), 0.25, edgecolor='#475569', facecolor='#FFFFFF', lw=1.5)
-    ax.add_patch(circle_cs)
-    # arrow inside
-    ax.annotate('', xy=(cs_x, (y_top+y_bot)/2 - 0.15), xytext=(cs_x, (y_top+y_bot)/2 + 0.15),
-                arrowprops=dict(arrowstyle="->", color='#475569', lw=1.5))
-    plt.plot([cs_x, cs_x], [y_bot, (y_top+y_bot)/2 - 0.25], color='#475569', lw=1.5)
-    plt.plot([cs_x, cs_x], [y_top, (y_top+y_bot)/2 + 0.25], color='#475569', lw=1.5)
-    ax.text(cs_x, y_top + 0.15, '98.4A * d̂(s)', fontsize=8.5, color='#475569', ha='center')
-    
-    # (c) Dependent Voltage Source 239.0V * d(s)
-    vs_x = 2.8
-    circle_vs = patches.Circle((vs_x, y_top), 0.25, edgecolor='#475569', facecolor='#FFFFFF', lw=1.5)
-    ax.add_patch(circle_vs)
-    ax.text(vs_x - 0.1, y_top, '-', fontsize=11, color='#475569', ha='center', va='center')
-    ax.text(vs_x + 0.1, y_top, '+', fontsize=11, color='#475569', ha='center', va='center')
-    ax.text(vs_x, y_top + 0.35, '239.0V * d̂(s)', fontsize=8.5, color='#475569', ha='center')
-    
-    # (d) Transformer (1 : 0.226)
+    # (b) Transformer (1 : 0.25 - Fixed 4:1 Ratio)
     tx_x = 3.8
     # primary winding
     plt.plot([tx_x - 0.1, tx_x - 0.1], [y_bot, y_top], color='#475569', lw=2)
@@ -71,9 +51,10 @@ def draw_open_loop_schematic():
     plt.plot([tx_x + 0.1, tx_x + 0.1], [y_bot, y_top], color='#475569', lw=2)
     # core line
     plt.plot([tx_x, tx_x], [y_bot+0.2, y_top-0.2], color='#94A3B8', lw=1.5)
-    ax.text(tx_x, y_top + 0.3, '1 : 0.226', fontsize=9, fontweight='bold', color='#1E293B', ha='center')
+    ax.text(tx_x, y_top + 0.3, '1 : 0.25', fontsize=9, fontweight='bold', color='#1E293B', ha='center')
+    ax.text(tx_x, y_bot - 0.3, '固定占空比 D = 25%', fontsize=8, color='#475569', ha='center')
     
-    # (e) Inductor Leq = 0.23 uH
+    # (c) Inductor Leq = 0.23 uH
     lx_start = 4.5
     lx_end = 5.4
     l_t = np.linspace(0, 4*np.pi, 200)
@@ -82,7 +63,7 @@ def draw_open_loop_schematic():
     plt.plot(l_x, l_y, color='#D97706', lw=2)
     ax.text((lx_start+lx_end)/2, y_top + 0.25, 'Leq = 0.23 μH', fontsize=9, fontweight='bold', color='#B45309', ha='center')
     
-    # (f) Resistor Rdcr_eq = 0.2 mOhm (Shifted right to 5.9-6.5 to give plenty of space)
+    # (d) Resistor Rdcr_eq = 0.2 mOhm
     rx_start = 5.9
     rx_end = 6.5
     rect_r = patches.Rectangle((rx_start, y_top - 0.08), rx_end - rx_start, 0.16,
@@ -90,7 +71,7 @@ def draw_open_loop_schematic():
     ax.add_patch(rect_r)
     ax.text((rx_start+rx_end)/2, y_top + 0.25, 'Rdcr_eq = 0.2 mΩ', fontsize=8.5, color='#475569', ha='center')
     
-    # (h) Capacitor C1 = 5000 uF (Shifted right to 7.2 to avoid any overlaps)
+    # (e) Capacitor C1 = 5000 uF
     c1_x = 7.2
     plt.plot([c1_x, c1_x], [y_top, y_top - 0.35], color='#475569', lw=1.5)
     plt.plot([c1_x - 0.2, c1_x + 0.2], [y_top - 0.35, y_top - 0.35], color='#475569', lw=2)
@@ -104,7 +85,7 @@ def draw_open_loop_schematic():
     ax.text(c1_x + 0.22, y_top - 0.25, 'C1 = 5000 μF', fontsize=8, color='#475569')
     ax.text(c1_x + 0.22, y_bot + 0.45, 'Resr1 = 1.0 mΩ', fontsize=8, color='#475569')
     
-    # (i) Capacitor C2 = 100 uF (Shifted right to 8.3)
+    # (f) Capacitor C2 = 100 uF
     c2_x = 8.3
     plt.plot([c2_x, c2_x], [y_top, y_top - 0.35], color='#475569', lw=1.5)
     plt.plot([c2_x - 0.2, c2_x + 0.2], [y_top - 0.35, y_top - 0.35], color='#475569', lw=2)
@@ -118,7 +99,7 @@ def draw_open_loop_schematic():
     ax.text(c2_x + 0.22, y_top - 0.25, 'C2 = 100 μF', fontsize=8, color='#475569')
     ax.text(c2_x + 0.22, y_bot + 0.45, 'Resr2 = 0.3 mΩ', fontsize=8, color='#475569')
     
-    # (j) Load Resistor R_load = 0.124 (Shifted right to 9.4)
+    # (g) Load Resistor R_load = 0.124
     rl_x = 9.4
     rect_rl = patches.Rectangle((rl_x - 0.08, (y_top+y_bot)/2 - 0.25), 0.16, 0.5,
                                 edgecolor='#475569', facecolor='#FFFFFF', lw=1.5)
@@ -130,7 +111,7 @@ def draw_open_loop_schematic():
     plt.plot([rl_x, rl_x], [y_top, (y_top+y_bot)/2 + 0.25], color='#475569', lw=1.5)
     ax.text(rl_x + 0.22, (y_top+y_bot)/2, 'R_load = 0.124 Ω', fontsize=8.5, color='#1E293B')
     
-    # (k) Dependent Current Source i_load(s) (Shifted right to 10.5)
+    # (h) Dependent Current Source i_load(s)
     il_x = 10.5
     circle_il = patches.Circle((il_x, (y_top+y_bot)/2), 0.2, edgecolor='#475569', facecolor='#FFFFFF', lw=1.2)
     ax.add_patch(circle_il)
@@ -145,37 +126,10 @@ def draw_open_loop_schematic():
     plt.plot([10.5, 11.2], [y_bot, y_bot], color='#475569', lw=1.5)
     ax.text(11.2, y_top + 0.15, 'v̂(s) 输出', fontsize=9.5, fontweight='bold', color='#1E293B', ha='right')
     
-    # ---------------------------------------------------------
-    # 3. Independent Open-Loop Input (NO FEEDBACK LOOP AT BOTTOM)
-    # ---------------------------------------------------------
-    # Place control signal source in empty space at x=2.3 (exactly halfway between cs_x=1.8 and vs_x=2.8)
-    ol_src_x = 2.3
-    y_ctrl_node = y_top - 0.6
-    
-    # Control signal path up (does NOT cross any components)
-    plt.plot([ol_src_x, ol_src_x], [1.5, y_ctrl_node], color='#3B82F6', lw=1.5)
-    
-    # Branching lines:
-    # 1) Branch left to dependent current source at cs_x = 1.8
-    plt.plot([ol_src_x, cs_x + 0.25], [y_ctrl_node, y_ctrl_node], color='#3B82F6', lw=1.5)
-    ax.annotate('', xy=(cs_x + 0.25, (y_top+y_bot)/2), xytext=(cs_x + 0.45, y_ctrl_node),
-                arrowprops=dict(arrowstyle="->", color='#3B82F6', lw=1.5, connectionstyle="angle,angleA=180,angleB=90,rad=3"))
-    
-    # 2) Branch right to dependent voltage source at vs_x = 2.8
-    plt.plot([ol_src_x, vs_x], [y_ctrl_node, y_ctrl_node], color='#3B82F6', lw=1.5)
-    ax.annotate('', xy=(vs_x, y_top - 0.25), xytext=(vs_x, y_ctrl_node),
-                arrowprops=dict(arrowstyle="->", color='#3B82F6', lw=1.5))
-    
-    # Draw independent source box at x = ol_src_x, y = 1.15
-    rect_src = patches.Rectangle((ol_src_x - 1.0, 1.1), 2.0, 0.4,
-                                 edgecolor='#3B82F6', facecolor='#EFF6FF', lw=1.5)
-    ax.add_patch(rect_src)
-    ax.text(ol_src_x, 1.3, 'd̂(s) 独立阶跃输入', fontsize=8.5, fontweight='bold', color='#1E3A8A', ha='center')
-    
     plt.savefig("/Users/walter/Downloads/WPSSync/Work/3.Engineering/Ctrl/2PhBuck/DesignDoc/open_loop_schematic.png",
                 dpi=300, bbox_inches='tight')
     plt.close()
-    print("Open-loop schematic successfully drawn and saved with clean layout.")
+    print("Fixed ratio open-loop schematic successfully drawn and saved.")
 
 if __name__ == '__main__':
     draw_open_loop_schematic()

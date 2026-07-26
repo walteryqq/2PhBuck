@@ -857,26 +857,26 @@ try:
             )
             
     with tab_ol:
-        st.write("#### 📈 开环占空比正阶跃响应波形")
-        st.write("可通过下方输入框动态调整开环测试的占空比跃变幅度，观察由于 LC 二阶无源滤波器低阻尼引起的开环振铃现象：")
+        st.write("#### 📈 开环负载跃变响应波形 (固定占空比下的负载阶跃)")
+        st.write("在开环（固定比率，例如 D = 25.0%，即 4:1 固定变比）下，控制环路不进行任何调节（即没有占空比动态扰动 d̂(s)）。以下展示了在与闭环相同的负载突变（40% -> 100% 突变）下，系统由于 LC 二阶无源滤波器低阻尼引起的开环振铃与永久性电压跌落现象：")
         
-        col_p1, col_p2, col_p3 = st.columns(3)
+        col_p1, col_p2 = st.columns(2)
         with col_p1:
-            ol_d_init = st.number_input("初始占空比 D_init (稳态)", min_value=0.0, max_value=1.0, value=10.0/vin, step=0.01, format="%.3f", key="ol_d_init")
+            ol_d_fixed = st.number_input("固定占空比 D (无反馈调节)", min_value=0.0, max_value=1.0, value=vref/vin, step=0.01, format="%.3f", key="ol_d_fixed")
         with col_p2:
-            ol_d_step = st.number_input("阶跃占空比 D_step (新状态)", min_value=0.0, max_value=1.0, value=vref/vin, step=0.01, format="%.3f", key="ol_d_step")
-        with col_p3:
-            ol_t_step = st.number_input("占空比跃变时间 (ms)", min_value=0.1, max_value=2.5, value=1.0, step=0.1, key="ol_t_step") * 1e-3
+            ol_t_step = st.number_input("负载突变时刻 (ms)", min_value=0.1, max_value=2.5, value=1.0, step=0.1, key="ol_t_step") * 1e-3
             
-        # Run dynamic open-loop simulation
+        # Run open-loop simulation under load step
+        # r_load_init (40% load) to r_load_step (100% load)
+        # We pass vin, ol_d_fixed*vin as Vref to simulate_open_loop to set the fixed duty cycle
         t_ol, v_ol_c, i1_ol_c, i2_ol_c, _ = simulate_open_loop(
-            Vin=vin, L=L, k_coupling=k_coupling, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
-            Rload=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, d_init=ol_d_init, d_step=ol_d_step, fs=fs
+            Vin=vin, Vref=ol_d_fixed*vin, L=L, k_coupling=k_coupling, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
+            Rload_init=r_load_init, Rload_step=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs
         )
         
         _, v_ol_un, i1_ol_un, i2_ol_un, _ = simulate_open_loop(
-            Vin=vin, L=L, k_coupling=0.0, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
-            Rload=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, d_init=ol_d_init, d_step=ol_d_step, fs=fs
+            Vin=vin, Vref=ol_d_fixed*vin, L=L, k_coupling=0.0, Rdcr=Rdcr, C1=C1, Resr1=Resr1, C2=C2, Resr2=Resr2,
+            Rload_init=r_load_init, Rload_step=r_load_step, t_sim=2.5e-3, t_step=ol_t_step, fs=fs
         )
         
         fig_ol, axs_ol = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
@@ -885,12 +885,15 @@ try:
         # Row 1: Voltage
         axs_ol[0].plot(t_ol * 1e3, v_ol_c, label=f"耦合电感 (k={k_coupling})", color="#1E3A8A", linewidth=2)
         axs_ol[0].plot(t_ol * 1e3, v_ol_un, label="独立电感 (k=0)", color="#94A3B8", linestyle="--", linewidth=1.5)
-        axs_ol[0].axhline(y=ol_d_init * vin, color="gray", linestyle=":", alpha=0.7, label=f"初态平衡 ({ol_d_init * vin:.2f}V)")
-        axs_ol[0].axhline(y=ol_d_step * vin, color="red", linestyle=":", label=f"阶跃目标 ({ol_d_step * vin:.2f}V)")
+        axs_ol[0].axhline(y=ol_d_fixed * vin, color="red", linestyle=":", label=f"空载理论电压 ({ol_d_fixed * vin:.2f}V)")
+        # Calculate steady state voltage under 100% load for reference
+        # Vo = D * Vin * Rload / (Rload + Rdcr_eq)
+        vo_steady_full = (ol_d_fixed * vin) * r_load_step / (r_load_step + Rdcr/2.0)
+        axs_ol[0].axhline(y=vo_steady_full, color="gray", linestyle="-.", alpha=0.7, label=f"满载稳态值 ({vo_steady_full:.2f}V)")
         axs_ol[0].set_ylabel("输出电压 Vo (V)", fontsize=10, fontweight="bold")
         axs_ol[0].grid(True, linestyle=":", alpha=0.6)
         axs_ol[0].legend(loc="upper right", framealpha=0.9)
-        axs_ol[0].set_title("Open-Loop Voltage Response to Duty Step", fontsize=11, fontweight="bold")
+        axs_ol[0].set_title("Open-Loop Voltage Response to Load Step (Fixed Duty Cycle)", fontsize=11, fontweight="bold")
         
         # Row 2: Current
         axs_ol[1].plot(t_ol * 1e3, i1_ol_c + i2_ol_c, label="总电流 - 耦合电感", color="#10B981", linewidth=2)
@@ -899,15 +902,15 @@ try:
         axs_ol[1].set_xlabel("时间 Time (ms)", fontsize=10)
         axs_ol[1].grid(True, linestyle=":", alpha=0.6)
         axs_ol[1].legend(loc="upper right", framealpha=0.9)
-        axs_ol[1].set_title("Open-Loop Output Current Response", fontsize=11, fontweight="bold")
+        axs_ol[1].set_title("Open-Loop Output Current Response under Load Step", fontsize=11, fontweight="bold")
         
         st.pyplot(fig_ol)
         
         # Show equivalent open loop schematic
         st.markdown("#### 📐 开环等效电路小信号拓扑结构")
-        st.write("在开环状态下，控制反馈环路断开，相当于给功率级等效电路输入一个阶跃的占空比控制源。其电路等效模型与信号流走向如下图所示：")
+        st.write("在开环固定比例下，占空比没有动态扰动（d̂(s) = 0），因此等效电路中不存在受控电压源与受控电流源，信号纯粹由于负载电流突变扰动（î_load(s)）激发二阶 LC 滤波器的状态响应：")
         if os.path.exists("DesignDoc/open_loop_schematic.png"):
-            st.image("DesignDoc/open_loop_schematic.png", caption="两相交错并联 Buck 功率级等效小信号电路模型 (无反馈控制环路)", use_container_width=True)
+            st.image("DesignDoc/open_loop_schematic.png", caption="两相交错并联 Buck 固定比例 (Fixed Ratio) 开环等效小信号电路模型 (无反馈环路及受控占空比源)", use_container_width=True)
         
     # 5. 数字补偿与设计参考指南
     st.markdown('<div id="section-5"></div>', unsafe_allow_html=True)

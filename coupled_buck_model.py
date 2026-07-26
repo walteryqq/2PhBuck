@@ -278,23 +278,23 @@ def bode_analysis(
     }
 
 def simulate_open_loop(
-    Vin=12.0, L=1.0e-6, k_coupling=0.5, Rdcr=5.0e-3,
+    Vin=12.0, Vref=1.0, L=1.0e-6, k_coupling=0.5, Rdcr=5.0e-3,
     C1=800.0e-6, Resr1=2.0e-3, C2=700.0e-6, Resr2=2.0e-3,
-    Rload=1.0, t_sim=2.5e-3, t_step=1.0e-3,
-    d_init=0.1, d_step=0.2, fs=200e3
+    Rload_init=1.0, Rload_step=0.2, t_sim=2.5e-3, t_step=1.0e-3,
+    fs=200e3
 ):
     """
-    Simulates the open-loop transient step response of the coupled buck converter.
-    Steps the duty cycle from d_init to d_step at t_step.
+    Simulates the open-loop transient response of the coupled buck converter under a load step,
+    while operating at a fixed, constant duty cycle (D = Vref / Vin).
     """
     M = k_coupling * L
     delta = L**2 - M**2
     if delta <= 0:
         raise ValueError("Coupling coefficient must satisfy |k| < 1.0")
         
-    v_init = d_init * Vin
-    i_steady = (v_init / Rload) / 2.0
-    x = np.array([i_steady, i_steady, v_init, v_init])
+    d_fixed = Vref / Vin
+    i_steady_init = (Vref / Rload_init) / 2.0
+    x = np.array([i_steady_init, i_steady_init, Vref, Vref])
     
     Tsw = 1.0 / fs
     dt = Tsw / 200.0
@@ -309,17 +309,17 @@ def simulate_open_loop(
     inv_resr1 = 1.0 / Resr1
     inv_resr2 = 1.0 / Resr2
     
-    def derivatives(x_val, d1, d2):
+    def derivatives(x_val, Rload_val):
         i1, i2, vc1, vc2 = x_val
         i_sum = i1 + i2
-        vo = (vc1 * inv_resr1 + vc2 * inv_resr2 + i_sum) / (inv_resr1 + inv_resr2 + 1.0 / Rload)
+        vo = (vc1 * inv_resr1 + vc2 * inv_resr2 + i_sum) / (inv_resr1 + inv_resr2 + 1.0 / Rload_val)
         ic1 = (vo - vc1) / Resr1
         ic2 = (vo - vc2) / Resr2
         vc1_dot = ic1 / C1
         vc2_dot = ic2 / C2
         
-        v1_sw = d1 * Vin
-        v2_sw = d2 * Vin
+        v1_sw = d_fixed * Vin
+        v2_sw = d_fixed * Vin
         
         term1 = v1_sw - i1 * Rdcr - vo
         term2 = v2_sw - i2 * Rdcr - vo
@@ -331,17 +331,13 @@ def simulate_open_loop(
 
     for step in range(n_steps):
         t = t_arr[step]
-        d_val = d_init if t < t_step else d_step
-        d_arr[step] = d_val
+        Rload = Rload_init if t < t_step else Rload_step
+        d_arr[step] = d_fixed
         
-        # Open-loop average model (Phase 1 and 2 same duty cycle)
-        d1 = d_val
-        d2 = d_val
-        
-        k1 = dt * derivatives(x, d1, d2)
-        k2 = dt * derivatives(x + 0.5 * k1, d1, d2)
-        k3 = dt * derivatives(x + 0.5 * k2, d1, d2)
-        k4 = dt * derivatives(x + k3, d1, d2)
+        k1 = dt * derivatives(x, Rload)
+        k2 = dt * derivatives(x + 0.5 * k1, Rload)
+        k3 = dt * derivatives(x + 0.5 * k2, Rload)
+        k4 = dt * derivatives(x + k3, Rload)
         x = x + (k1 + 2 * k2 + 2 * k3 + k4) / 6.0
         
         i_sum = x[0] + x[1]
