@@ -61,7 +61,19 @@ def simulate_coupled_buck(
     
     # 3. State initialization
     # x = [i1, i2, vc1, vc2]^T
-    i_steady = (Vref / Rload_init) / 2.0
+    i_load_init = Vref / Rload_init
+    i_load_target = Vref / Rload_step
+    slew_rate = 1.0e6  # 1A/us = 1e6 A/s
+    
+    def get_i_load(t_val):
+        if t_val < t_step:
+            return i_load_init
+        if i_load_target > i_load_init:
+            return min(i_load_target, i_load_init + slew_rate * (t_val - t_step))
+        else:
+            return max(i_load_target, i_load_init - slew_rate * (t_val - t_step))
+            
+    i_steady = i_load_init / 2.0
     x = np.array([i_steady, i_steady, Vref, Vref])
     
     # Arrays for recording results
@@ -91,13 +103,14 @@ def simulate_coupled_buck(
     for step in range(n_steps):
         t = t_arr[step]
         
-        # Load step logic
-        Rload = Rload_init if t < t_step else Rload_step
+        # Load current evaluation
+        i_load = get_i_load(t)
+        i_load_half = get_i_load(t + 0.5 * dt)
+        i_load_next = get_i_load(t + dt)
         
-        # Output voltage formula for parallel capacitors
+        # Output voltage formula for parallel capacitors (Current Source Load)
         i_sum = x[0] + x[1]
-        v_out = (x[2] * inv_resr1 + x[3] * inv_resr2 + i_sum) / (inv_resr1 + inv_resr2 + 1.0 / Rload)
-        i_load = v_out / Rload
+        v_out = (x[2] * inv_resr1 + x[3] * inv_resr2 + i_sum - i_load) / (inv_resr1 + inv_resr2)
         
         # Digital Controller Update
         if t - last_ctrl_time >= Tctrl:
@@ -145,10 +158,10 @@ def simulate_coupled_buck(
         d2_arr[step] = S2 * d_active
         
         # RK4 ODE Integration
-        def f_state(x_val, Rload_val, S1_val, S2_val):
+        def f_state(x_val, i_load_val, S1_val, S2_val):
             i1, i2, vc1, vc2 = x_val
             i_sum_val = i1 + i2
-            v_out_val = (vc1 * inv_resr1 + vc2 * inv_resr2 + i_sum_val) / (inv_resr1 + inv_resr2 + 1.0 / Rload_val)
+            v_out_val = (vc1 * inv_resr1 + vc2 * inv_resr2 + i_sum_val - i_load_val) / (inv_resr1 + inv_resr2)
             
             vin1 = S1_val * Vin
             vin2 = S2_val * Vin
@@ -161,10 +174,10 @@ def simulate_coupled_buck(
             
             return np.array([di1_dt, di2_dt, dvc1_dt, dvc2_dt])
             
-        k1 = f_state(x, Rload, S1, S2)
-        k2 = f_state(x + 0.5 * dt * k1, Rload, S1, S2)
-        k3 = f_state(x + 0.5 * dt * k2, Rload, S1, S2)
-        k4 = f_state(x + dt * k3, Rload, S1, S2)
+        k1 = f_state(x, i_load, S1, S2)
+        k2 = f_state(x + 0.5 * dt * k1, i_load_half, S1, S2)
+        k3 = f_state(x + 0.5 * dt * k2, i_load_half, S1, S2)
+        k4 = f_state(x + dt * k3, i_load_next, S1, S2)
         
         x = x + (dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
         if dcm_mode:
@@ -285,7 +298,7 @@ def simulate_open_loop(
 ):
     """
     Simulates the open-loop transient response of the coupled buck converter under a load step,
-    while operating at a fixed, constant duty cycle (D = Vref / Vin).
+    while operating at a fixed, constant duty cycle (D = Vref / Vin) and 1A/us load step slew rate.
     """
     M = k_coupling * L
     delta = L**2 - M**2
@@ -293,7 +306,19 @@ def simulate_open_loop(
         raise ValueError("Coupling coefficient must satisfy |k| < 1.0")
         
     d_fixed = Vref / Vin
-    i_steady_init = (Vref / Rload_init) / 2.0
+    i_load_init = Vref / Rload_init
+    i_load_target = Vref / Rload_step
+    slew_rate = 1.0e6  # 1A/us = 1e6 A/s
+    
+    def get_i_load(t_val):
+        if t_val < t_step:
+            return i_load_init
+        if i_load_target > i_load_init:
+            return min(i_load_target, i_load_init + slew_rate * (t_val - t_step))
+        else:
+            return max(i_load_target, i_load_init - slew_rate * (t_val - t_step))
+            
+    i_steady_init = i_load_init / 2.0
     x = np.array([i_steady_init, i_steady_init, Vref, Vref])
     
     Tsw = 1.0 / fs
@@ -309,10 +334,10 @@ def simulate_open_loop(
     inv_resr1 = 1.0 / Resr1
     inv_resr2 = 1.0 / Resr2
     
-    def derivatives(x_val, Rload_val):
+    def derivatives(x_val, i_load_val):
         i1, i2, vc1, vc2 = x_val
         i_sum = i1 + i2
-        vo = (vc1 * inv_resr1 + vc2 * inv_resr2 + i_sum) / (inv_resr1 + inv_resr2 + 1.0 / Rload_val)
+        vo = (vc1 * inv_resr1 + vc2 * inv_resr2 + i_sum - i_load_val) / (inv_resr1 + inv_resr2)
         ic1 = (vo - vc1) / Resr1
         ic2 = (vo - vc2) / Resr2
         vc1_dot = ic1 / C1
@@ -331,17 +356,19 @@ def simulate_open_loop(
 
     for step in range(n_steps):
         t = t_arr[step]
-        Rload = Rload_init if t < t_step else Rload_step
+        i_load = get_i_load(t)
+        i_load_half = get_i_load(t + 0.5 * dt)
+        i_load_next = get_i_load(t + dt)
         d_arr[step] = d_fixed
         
-        k1 = dt * derivatives(x, Rload)
-        k2 = dt * derivatives(x + 0.5 * k1, Rload)
-        k3 = dt * derivatives(x + 0.5 * k2, Rload)
-        k4 = dt * derivatives(x + k3, Rload)
+        k1 = dt * derivatives(x, i_load)
+        k2 = dt * derivatives(x + 0.5 * k1, i_load_half)
+        k3 = dt * derivatives(x + 0.5 * k2, i_load_half)
+        k4 = dt * derivatives(x + k3, i_load_next)
         x = x + (k1 + 2 * k2 + 2 * k3 + k4) / 6.0
         
         i_sum = x[0] + x[1]
-        vo = (x[2] * inv_resr1 + x[3] * inv_resr2 + i_sum) / (inv_resr1 + inv_resr2 + 1.0 / Rload)
+        vo = (x[2] * inv_resr1 + x[3] * inv_resr2 + i_sum - i_load) / (inv_resr1 + inv_resr2)
         v_out_arr[step] = vo
         i1_arr[step] = x[0]
         i2_arr[step] = x[1]
