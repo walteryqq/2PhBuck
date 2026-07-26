@@ -870,12 +870,12 @@ try:
     
     col_p1, col_p2, col_p3 = st.columns(3)
     with col_p1:
-        ol_d_fixed = st.number_input("开环固定占空比 D", min_value=0.0, max_value=1.0, value=vref/vin, step=0.01, format="%.3f", key="ol_d_fixed")
+        ol_d_fixed = st.number_input("开环固定占空比 D", min_value=0.0, max_value=1.0, value=0.25, step=0.01, format="%.3f", key="ol_d_fixed")
         ol_slew_rate_val = st.number_input("开环电流变化率 (A/μs)", min_value=0.1, max_value=50.0, value=1.0, step=0.5, format="%.1f", key="ol_slew_rate_val")
         ol_slew_rate = ol_slew_rate_val * 1e6
     with col_p2:
         ol_i_init = st.number_input("开环初始电流 I_init (A)", min_value=0.0, max_value=500.0, value=64.0, step=1.0, format="%.1f", key="ol_i_init")
-        ol_t_step = st.number_input("开环负载跳变时刻 (ms)", min_value=0.1, max_value=10.0, value=1.0, step=0.1, key="ol_t_step") * 1e-3
+        ol_t_step = st.number_input("开环负载跳变时刻 (ms)", min_value=0.05, max_value=10.0, value=0.1, step=0.05, format="%.2f", key="ol_t_step") * 1e-3
     with col_p3:
         ol_i_target = st.number_input("开环跳变电流 I_step (A)", min_value=0.0, max_value=500.0, value=100.0, step=1.0, format="%.1f", key="ol_i_target")
         ol_t_sim = st.number_input("开环仿真总时长 (ms)", min_value=0.2, max_value=20.0, value=2.5, step=0.5, key="ol_t_sim") * 1e-3
