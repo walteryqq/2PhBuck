@@ -1309,9 +1309,37 @@ try:
         
         f_corner = 1.0 / (np.pi * t_ramp)
         
-        fig_spec, (ax_z, ax_i) = plt.subplots(1, 2, figsize=(12, 5))
+        # Time-domain waveform reconstruction for illustration
+        t_plot = np.linspace(-50e-6, t_ramp + 50e-6, 1000)
+        i_delta_t = np.zeros_like(t_plot)
+        di_delta_t = np.zeros_like(t_plot)
+        for idx_t, t_val in enumerate(t_plot):
+            if 0.0 <= t_val <= t_ramp:
+                i_delta_t[idx_t] = ol_slew_rate * t_val
+                di_delta_t[idx_t] = ol_slew_rate
+                
+        fig_spec, (ax_t, ax_z, ax_i) = plt.subplots(1, 3, figsize=(16, 5))
+        plt.subplots_adjust(wspace=0.35)
         
-        # Left Plot: Output Impedance
+        # Left Plot: Time-domain Transition Waveforms (Ramp and Derivative)
+        color_i = "#EF4444"
+        ax_t.plot(t_plot * 1e6, i_delta_t, color=color_i, linewidth=2.5, label="Ramp Pulse i_Δ(t)")
+        ax_t.set_xlabel("Time (μs)", fontsize=10)
+        ax_t.set_ylabel("Current Increment i_Δ (A)", color=color_i, fontsize=10, fontweight="bold")
+        ax_t.tick_params(axis='y', labelcolor=color_i)
+        ax_t.grid(True, linestyle=":", alpha=0.5)
+        
+        # Twin axis for derivative
+        ax_t_der = ax_t.twinx()
+        color_der = "#F59E0B"
+        # Using step to show the sharp pulse of derivative
+        ax_t_der.step(t_plot * 1e6, di_delta_t / 1e6, color=color_der, linewidth=2.0, linestyle="--", where="mid", label="Derivative di/dt")
+        ax_t_der.set_ylabel("Derivative di_Δ/dt (A/μs)", color=color_der, fontsize=10, fontweight="bold")
+        ax_t_der.tick_params(axis='y', labelcolor=color_der)
+        
+        ax_t.set_title("Time-Domain Transition Waveforms", fontsize=11, fontweight="bold")
+        
+        # Middle Plot: Output Impedance
         ax_z.loglog(f_axis, Z_out_mOhm, color="#1E3A8A", linewidth=2.5, label="Output Impedance |Z_out|")
         peak_idx = np.argmax(Z_out_mOhm)
         f_peak = f_axis[peak_idx]
@@ -1331,8 +1359,8 @@ try:
         ax_z.legend(loc="lower left")
         
         # Right Plot: Windowed Transition Spectrum (Sinc & Ramp Pulse)
-        ax_i.loglog(f_axis, I_delta_spec, color="#EF4444", linewidth=2.5, label="Ramp Pulse |I_trans(f)| (A·s)")
-        ax_i.loglog(f_axis, dI_spec, color="#F59E0B", linewidth=2.0, linestyle="--", label="Derivative |dI/dt(f)| (A)")
+        ax_i.loglog(f_axis, I_delta_spec, color=color_i, linewidth=2.5, label="Ramp Pulse |I_trans(f)| (A·s)")
+        ax_i.loglog(f_axis, dI_spec, color=color_der, linewidth=2.0, linestyle="--", label="Derivative |dI/dt(f)| (A)")
         ax_i.axvline(x=f_corner, color="#8B5CF6", linestyle="--", label=f"Corner freq = {f_corner/1e3:.2f} kHz")
         ax_i.axvline(x=f_n_val, color="red", linestyle=":", alpha=0.8, label=f"LC Resonance fn = {f_n_val:.1f} Hz")
         
