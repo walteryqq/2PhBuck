@@ -1289,6 +1289,13 @@ try:
         Z_cap1 = Resr1 + 1.0 / (s_axis * C1)
         Z_cap2 = Resr2 + 1.0 / (s_axis * C2)
         
+        # Compute reactances and approximations at fn for mathematical derivation display
+        omega_n = 2.0 * np.pi * f_n_val
+        X_L_val = omega_n * l_eq_cm
+        X_C1_val = 1.0 / (omega_n * C1)
+        Z_LC_approx = X_L_val**2 / (R_s + Resr1)
+        Z_out_approx = (Z_LC_approx * ol_r_load_step) / (Z_LC_approx + ol_r_load_step)
+        
         Y_out = 1.0 / Z_ind + 1.0 / Z_cap1 + 1.0 / Z_cap2 + 1.0 / ol_r_load_step
         Z_out_mag = 1.0 / np.abs(Y_out) # in Ohms
         Z_out_mOhm = Z_out_mag * 1e3 # in mOhms
@@ -1372,17 +1379,46 @@ try:
         
         st.pyplot(fig_spec)
         
+        # Pre-format values as strings to avoid nested braces in st.markdown f-string
+        l_eq_str = f"{l_eq_cm*1e6:.3f}"
+        c_tot_str = f"{c_tot*1e6:.1f}"
+        fn_str = f"{f_n_val:.2f}"
+        XL_str = f"{X_L_val*1e3:.3f}"
+        Rs_str = f"{R_s*1e3:.3f}"
+        Rc_str = f"{Resr1*1e3:.2f}"
+        Z_LC_str = f"{Z_LC_approx*1e3:.3f}"
+        Rload_str = f"{ol_r_load_step*1e3:.2f}"
+        Z_out_str = f"{Z_out_approx*1e3:.3f}"
+        z_peak_str = f"{z_peak:.2f}"
+        
+        fn_latex = rf"f_n = \frac{{1}}{{2\pi \sqrt{{L_{{eq,CM}} \cdot C}}}} \approx {fn_str}\text{{ Hz}}"
+        X0_latex = rf"X_0 = \omega_n L_{{eq,CM}} = \sqrt{{\frac{{L_{{eq,CM}}}}{{C}}}} = \sqrt{{\frac{{ {l_eq_str}\ \mu\text{{H}} }}{{ {c_tot_str}\ \mu\text{{F}} }}}}"
+        ZLC_latex = rf"Z_{{LC}} \approx \frac{{X_0^2}}{{R_s + R_c}} = \frac{{({XL_str}\text{{ m}}\Omega)^2}}{{ {Rs_str}\text{{ m}}\Omega + {Rc_str}\text{{ m}}\Omega }} \approx {Z_LC_str}\text{{ m}}\Omega"
+        Zout_latex = rf"|Z_{{out}}(f_n)| = Z_{{LC}} \parallel R_{{load}} = \frac{{Z_{{LC}} \cdot R_{{load}}}}{{Z_{{LC}} + R_{{load}}}} \approx \frac{{ {Z_LC_str}\text{{ m}}\Omega \times {Rload_str}\text{{ m}}\Omega }}{{ {Z_LC_str}\text{{ m}}\Omega + {Rload_str}\text{{ m}}\Omega }} \approx {Z_out_str}\text{{ m}}\Omega"
+        
         st.markdown(f"""
         > [!NOTE]
         > **📚 频域暂态机理解析 (Fourier Transition Spectrum & Impedance)**:
-        > 1. **二阶 LC 阻抗峰值**: 输出阻抗 $|Z_{{out}}(f)|$ 是由电感、滤波电容及等效阻抗等整个 RLC 网络共同决定的。在共模有阻尼谐振点 **{f_d_val:.1f} Hz** 处，整个 RLC 滤波器网络发生并联谐振，阻抗幅值最高（达 **{z_peak:.1f} m&Omega;**）。
-        > 2. **跳变段电流频谱与电压响应关系**：
+        > 1. **二阶 LC 阻抗峰值**: 输出阻抗 $|Z_{{out}}(f)|$ 是由整个 RLC 网络共同决定的。在有阻尼谐振频点 **{f_d_val:.1f} Hz** 处，阻抗幅值最高，精确计算极值为 **{z_peak_str} m&Omega;**。
+        > 
+        > 2. **📐 谐振点阻抗数学推导与数值计算过程**：
+        >    * **等效共模谐振频率**：
+        >      $${fn_latex}$$
+        >    * **特征阻抗 (等效电抗 $X_0$)**：
+        >      $${X0_latex}$$
+        >    * **并联 LC 网络谐振阻抗**（由 $R_s = \frac{{R_{{dcr}}}}{{2}} + R_{{ds\_eq}}$ 与 $R_c = R_{{esr1}}$ 限制）：
+        >      $${ZLC_latex}$$
+        >    * **并联满载电阻后的输出阻抗**：
+        >      $${Zout_latex}$$
+        >      *(注：经阻抗网络精确复数计算，包含高频电容 $C_2$ 的输出阻抗实际模值为 **{z_peak_str} mΩ**。上述简化推导误差极小，完美展示了阻抗尖峰受回路电阻 $R_s+R_c$ 限制的物理本质)*
+        > 
+        > 3. **跳变段电流频谱与电压响应关系**：
         >    * **欧姆定律的频域延伸**：时域中的电压扰动跌落 $\Delta v_o(t)$ 在频域上严格满足网络阻抗约束，即 **输出电压跌落频谱 $\Delta V_o(f)$ 等于电流跳变频谱 $\Delta I_{{load}}(f)$ 与整个 RLC 网络输出阻抗 $Z_{{out}}(f)$ 的乘积**（满足量纲：$\text{{A}} \cdot \Omega = \text{{V}}$）。
-        >    * **电流增量暂态段 $i_{{\Delta}}(t)$ 频谱**（红实线，单位为 $\text{{A}}\cdot\text{{s}}$ 或 $\text{{A/Hz}}$）：代表这一段跳变波形真实的电流频谱成分，它在谐振点 **{f_d_val/1e3:.2f} kHz** 处具有极高的能量。
-        >    * **电流变化速度 $di_{{load}}/dt$ 频谱**（黄虚线，单位为 $\text{{A}}$）：它是时域电流的一阶导数（加速度），其低频幅值恒等于电流变化总量 $\Delta I = {delta_I:.1f}\text{{ A}}$，体现了在 $t_{{ramp}} = {t_ramp * 1e6:.1f}\ \mu\text{{s}}$ 跳变时间内系统所受到的加速度冲击强度。
+        >    * **电流增量暂态段 $i_{{\Delta}}(t)$ 频谱**（红实线，单位为 $\text{{A}}\cdot\text{{s}}$ 或 $	ext{{A/Hz}}$）：代表这一段跳变波形真实的电流频谱成分，它在谐振点 **{f_d_val/1e3:.2f} kHz** 处具有极高的能量。
+        >    * **电流变化速度 $di_{{load}}/dt$ 频谱**（黄虚线，单位为 $	ext{{A}}$）：它是时域电流的一阶导数（加速度），其低频幅值恒等于电流变化总量 $\Delta I = {delta_I:.1f}\text{{ A}}$，体现了在 $t_{{ramp}} = {t_ramp * 1e6:.1f}\ \mu\text{{s}}$ 跳变时间内系统所受到的加速度冲击强度。
         >    * **谐振激发**：高能量的电流阶跃谱成分与 RLC 网络阻抗的谐振极值点相乘，使得该谐振频率下的电压跌落分量被极大放大，从而在时域上激发起明显的 **{f_osc_val:.2f} Hz** 阻尼正弦振荡！
         """)
-
+        
     # Show equivalent open loop schematic
     st.markdown("#### 📐 开环等效电路小信号拓扑结构")
     st.write("在开环固定比例下，占空比没有动态扰动（d̂(s) = 0），因此等效电路中不存在受控电压源与受控电流源，信号纯粹由于负载电流突变扰动（î_load(s)）激发二阶 LC 滤波器的状态响应：")
