@@ -1144,31 +1144,6 @@ try:
         else:
             i_load_arr_ol[step_idx] = max(ol_i_target, ol_i_init - ol_slew_rate * (t_val - ol_t_step))
             
-    fig_ol, axs_ol = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
-    plt.subplots_adjust(hspace=0.25)
-    
-    # Row 1: Voltage
-    axs_ol[0].plot(t_ol * 1e3, v_ol_c, label=f"Coupled Inductor (k={k_coupling})", color="#1E3A8A", linewidth=2)
-    axs_ol[0].axhline(y=ol_vref, color="red", linestyle=":", label=f"No-load Voltage ({ol_vref:.2f}V)")
-    # Calculate steady state voltage under 100% load for reference
-    vo_steady_full = ol_vref * ol_r_load_step / (ol_r_load_step + Rdcr/2.0 + Rds_eq)
-    axs_ol[0].axhline(y=vo_steady_full, color="gray", linestyle="-.", alpha=0.7, label=f"Full-load Steady-state ({vo_steady_full:.2f}V)")
-    axs_ol[0].set_ylabel("Vo (V)", fontsize=10, fontweight="bold")
-    axs_ol[0].grid(True, linestyle=":", alpha=0.6)
-    axs_ol[0].legend(loc="upper right", framealpha=0.9)
-    axs_ol[0].set_title("Open-Loop Voltage Response to Load Step (Fixed Duty Cycle)", fontsize=11, fontweight="bold")
-    
-    # Row 2: Current
-    axs_ol[1].plot(t_ol * 1e3, i1_ol_c + i2_ol_c, label="Total Inductor Current (Coupled)", color="#10B981", linewidth=2)
-    axs_ol[1].plot(t_ol * 1e3, i_load_arr_ol, label="Load Current I_load (Disturbance)", color="#EF4444", linestyle="-.", linewidth=2)
-    axs_ol[1].set_ylabel("Currents (A)", fontsize=10, fontweight="bold")
-    axs_ol[1].set_xlabel("Time (ms)", fontsize=10)
-    axs_ol[1].grid(True, linestyle=":", alpha=0.6)
-    axs_ol[1].legend(loc="upper right", framealpha=0.9)
-    axs_ol[1].set_title("Open-Loop Current Transient Comparison", fontsize=11, fontweight="bold")
-    
-    st.pyplot(fig_ol)
-    
     # Calculate open-loop phase current ripple peak-to-peak
     ol_steady_mask = (t_ol > 0.4 * ol_t_step) & (t_ol < 0.9 * ol_t_step)
     if np.any(ol_steady_mask):
@@ -1176,19 +1151,6 @@ try:
     else:
         ol_ripple_coupled = 0.0
     ol_v_min = np.min(v_ol_c)
-    
-    st.write("#### 📊 开环稳态与动态纹波性能量化")
-    col_ol_t1, col_ol_t2 = st.columns(2)
-    with col_ol_t1:
-        st.metric(
-            label="开环相电流稳态双峰纹波 (Coupled)",
-            value=f"{ol_ripple_coupled:.3f} A"
-        )
-    with col_ol_t2:
-        st.metric(
-            label="开环负载跳变最低瞬态电压 (Coupled)",
-            value=f"{ol_v_min:.3f} V"
-        )
     
     # Calculate wave oscillation frequency, period, and LC resonant frequency
     i_total_ol = i1_ol_c + i2_ol_c
@@ -1233,46 +1195,152 @@ try:
     f_d_val = f_n_val * np.sqrt(1.0 - zeta_val**2) if zeta_val < 1.0 else 0.0
     T_d_ms = (1000.0 / f_d_val) if f_d_val > 0 else 0.0
 
-    # Render results dashboard
-    st.markdown("#### 📊 时域波形振荡频率与 LC 谐振特征核对")
+    # Create Tabs for Section 5 open-loop response
+    ol_tab1, ol_tab2 = st.tabs(["📈 时域暂态波形 (Time-Domain Waveforms)", "📊 阻抗与阶跃频谱分析 (Impedance & Step Spectrum)"])
     
-    col_res1, col_res2 = st.columns(2)
-    with col_res1:
-        if f_osc_val is not None:
+    with ol_tab1:
+        fig_ol, axs_ol = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
+        plt.subplots_adjust(hspace=0.25)
+        
+        # Row 1: Voltage
+        axs_ol[0].plot(t_ol * 1e3, v_ol_c, label=f"Coupled Inductor (k={k_coupling})", color="#1E3A8A", linewidth=2)
+        axs_ol[0].axhline(y=ol_vref, color="red", linestyle=":", label=f"No-load Voltage ({ol_vref:.2f}V)")
+        vo_steady_full = ol_vref * ol_r_load_step / (ol_r_load_step + Rdcr/2.0 + Rds_eq)
+        axs_ol[0].axhline(y=vo_steady_full, color="gray", linestyle="-.", alpha=0.7, label=f"Full-load Steady-state ({vo_steady_full:.2f}V)")
+        axs_ol[0].set_ylabel("Vo (V)", fontsize=10, fontweight="bold")
+        axs_ol[0].grid(True, linestyle=":", alpha=0.6)
+        axs_ol[0].legend(loc="upper right", framealpha=0.9)
+        axs_ol[0].set_title("Open-Loop Voltage Response to Load Step (Fixed Duty Cycle)", fontsize=11, fontweight="bold")
+        
+        # Row 2: Current
+        axs_ol[1].plot(t_ol * 1e3, i1_ol_c + i2_ol_c, label="Total Inductor Current (Coupled)", color="#10B981", linewidth=2)
+        axs_ol[1].plot(t_ol * 1e3, i_load_arr_ol, label="Load Current I_load (Disturbance)", color="#EF4444", linestyle="-.", linewidth=2)
+        axs_ol[1].set_ylabel("Currents (A)", fontsize=10, fontweight="bold")
+        axs_ol[1].set_xlabel("Time (ms)", fontsize=10)
+        axs_ol[1].grid(True, linestyle=":", alpha=0.6)
+        axs_ol[1].legend(loc="upper right", framealpha=0.9)
+        axs_ol[1].set_title("Open-Loop Current Transient Comparison", fontsize=11, fontweight="bold")
+        
+        st.pyplot(fig_ol)
+        
+        st.write("#### 📊 开环稳态与动态纹波性能量化")
+        col_ol_t1, col_ol_t2 = st.columns(2)
+        with col_ol_t1:
+            st.metric(
+                label="开环相电流稳态双峰纹波 (Coupled)",
+                value=f"{ol_ripple_coupled:.3f} A"
+            )
+        with col_ol_t2:
+            st.metric(
+                label="开环负载跳变最低瞬态电压 (Coupled)",
+                value=f"{ol_v_min:.3f} V"
+            )
+            
+        st.markdown("#### 📊 时域波形振荡频率与 LC 谐振特征核对")
+        col_res1, col_res2 = st.columns(2)
+        with col_res1:
+            if f_osc_val is not None:
+                st.markdown(f"""
+                <div class="metric-card" style="background:#FFFDFA; border:1px solid #FCD34D;">
+                    <div class="metric-title" style="color:#D97706;">📈 时域仿真波形检测 (Simulation Waveform)</div>
+                    <div class="metric-value" style="color:#B45309; font-size:1.6rem;">{f_osc_val:.2f} Hz</div>
+                    <span style="font-size:0.85rem; color:#64748B;">
+                        检测前几个峰值时间: {', '.join([f"{t:.3f}ms" for t in peak_times_ms[:5]])} {'...' if len(peak_times_ms) > 5 else ''}<br>
+                        平均振荡周期 T_osc: <b>{mean_period_ms:.4f} ms</b>
+                    </span>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="metric-card" style="background:#FFFDFA; border:1px solid #FCD34D;">
+                    <div class="metric-title" style="color:#D97706;">📈 时域仿真波形检测 (Simulation Waveform)</div>
+                    <div class="metric-value" style="color:#B45309; font-size:1.3rem;">未检测到足够多的振荡波谷/峰</div>
+                    <span style="font-size:0.85rem; color:#64748B;">请确保仿真总时长足够长且系统阻尼较低以观察到完整周期。</span>
+                </div>
+                """, unsafe_allow_html=True)
+                
+        with col_res2:
             st.markdown(f"""
-            <div class="metric-card" style="background:#FFFDFA; border:1px solid #FCD34D;">
-                <div class="metric-title" style="color:#D97706;">📈 时域仿真波形检测 (Simulation Waveform)</div>
-                <div class="metric-value" style="color:#B45309; font-size:1.6rem;">{f_osc_val:.2f} Hz</div>
+            <div class="metric-card" style="background:#F0FDF4; border:1px solid #86EFAC;">
+                <div class="metric-title" style="color:#16A34A;">📐 LC 无源滤波器理论计算 (Theoretical LC)</div>
+                <div class="metric-value" style="color:#15803D; font-size:1.6rem;">{f_d_val:.2f} Hz</div>
                 <span style="font-size:0.85rem; color:#64748B;">
-                    检测前几个峰值时间: {', '.join([f"{t:.3f}ms" for t in peak_times_ms[:5]])} {'...' if len(peak_times_ms) > 5 else ''}<br>
-                    平均振荡周期 T_osc: <b>{mean_period_ms:.4f} ms</b>
+                    无阻尼特征频率 f_n: <b>{f_n_val:.2f} Hz</b><br>
+                    系统总阻尼比 &zeta;: <b>{zeta_val:.4f}</b> (有阻尼周期 T_d: <b>{T_d_ms:.4f} ms</b>)
                 </span>
             </div>
             """, unsafe_allow_html=True)
-        else:
-            st.markdown(f"""
-            <div class="metric-card" style="background:#FFFDFA; border:1px solid #FCD34D;">
-                <div class="metric-title" style="color:#D97706;">📈 时域仿真波形检测 (Simulation Waveform)</div>
-                <div class="metric-value" style="color:#B45309; font-size:1.3rem;">未检测到足够多的振荡波谷/峰</div>
-                <span style="font-size:0.85rem; color:#64748B;">请确保仿真总时长足够长且系统阻尼较低以观察到完整周期。</span>
-            </div>
-            """, unsafe_allow_html=True)
             
-    with col_res2:
-        st.markdown(f"""
-        <div class="metric-card" style="background:#F0FDF4; border:1px solid #86EFAC;">
-            <div class="metric-title" style="color:#16A34A;">📐 LC 无源滤波器理论计算 (Theoretical LC)</div>
-            <div class="metric-value" style="color:#15803D; font-size:1.6rem;">{f_d_val:.2f} Hz</div>
-            <span style="font-size:0.85rem; color:#64748B;">
-                无阻尼特征频率 f_n: <b>{f_n_val:.2f} Hz</b><br>
-                系统总阻尼比 &zeta;: <b>{zeta_val:.4f}</b> (有阻尼周期 T_d: <b>{T_d_ms:.4f} ms</b>)
-            </span>
-        </div>
-        """, unsafe_allow_html=True)
+        if f_osc_val is not None:
+            rel_err = abs(f_osc_val - f_d_val) / f_d_val * 100.0
+            st.success(f"✅ **核对结论**: 时域波形实际振荡频率 ({f_osc_val:.2f} Hz) 与 LC 网络理论有阻尼特征频率 ({f_d_val:.2f} Hz) 的相对误差仅为 **{rel_err:.3f}%**，物理建模与 RK4 求解精度完美匹配！")
+
+    with ol_tab2:
+        st.write("#### 📊 负载电流阶跃频谱与输出阻抗频率特性分析")
+        st.write("下面展示了负载电流阶跃信号自身的频谱分布，以及开环输出阻抗的幅频特性，这能帮助您从频域本质上理解开环暂态跌落与振铃的原因。")
         
-    if f_osc_val is not None:
-        rel_err = abs(f_osc_val - f_d_val) / f_d_val * 100.0
-        st.success(f"✅ **核对结论**: 时域波形实际振荡频率 ({f_osc_val:.2f} Hz) 与 LC 网络理论有阻尼特征频率 ({f_d_val:.2f} Hz) 的相对误差仅为 **{rel_err:.3f}%**，物理建模与 RK4 求解精度完美匹配！")
+        # Calculate Z_out(f) and I_load(f)
+        f_axis = np.logspace(1, 6, 500) # 10Hz to 1MHz
+        s_axis = 2.0 * np.pi * 1j * f_axis
+        
+        # Z_out(s) calculation
+        R_s = (Rdcr / 2.0) + Rds_eq
+        Z_ind = R_s + s_axis * l_eq_cm
+        Z_cap1 = Resr1 + 1.0 / (s_axis * C1)
+        Z_cap2 = Resr2 + 1.0 / (s_axis * C2)
+        
+        Y_out = 1.0 / Z_ind + 1.0 / Z_cap1 + 1.0 / Z_cap2 + 1.0 / ol_r_load_step
+        Z_out_mag = 1.0 / np.abs(Y_out) # in Ohms
+        Z_out_mOhm = Z_out_mag * 1e3 # in mOhms
+        
+        # I_load(f) calculation (Laplace Spectrum Magnitude)
+        delta_I = abs(ol_i_target - ol_i_init)
+        t_ramp = delta_I / ol_slew_rate if ol_slew_rate > 0 else 1e-9
+        sin_term = np.abs(np.sin(np.pi * f_axis * t_ramp))
+        I_load_spec = (ol_slew_rate / (2.0 * np.pi**2 * f_axis**2)) * sin_term
+        
+        f_corner = 1.0 / (np.pi * t_ramp)
+        
+        fig_spec, (ax_z, ax_i) = plt.subplots(1, 2, figsize=(12, 5))
+        
+        # Left Plot: Output Impedance
+        ax_z.loglog(f_axis, Z_out_mOhm, color="#1E3A8A", linewidth=2.5, label="Output Impedance |Z_out|")
+        peak_idx = np.argmax(Z_out_mOhm)
+        f_peak = f_axis[peak_idx]
+        z_peak = Z_out_mOhm[peak_idx]
+        
+        ax_z.axvline(x=f_n_val, color="red", linestyle="--", label=f"LC Resonant fn = {f_n_val:.1f} Hz")
+        ax_z.plot(f_peak, z_peak, "ro")
+        ax_z.annotate(f"Peak: {z_peak:.1f} mΩ\n@ {f_peak/1e3:.2f} kHz", 
+                      xy=(f_peak, z_peak), 
+                      xytext=(f_peak * 1.5, z_peak * 0.5),
+                      arrowprops=dict(facecolor='black', shrink=0.08, width=1, headwidth=6))
+                      
+        ax_z.set_title("Open-Loop Output Impedance Profile |Z_out(f)|", fontsize=11, fontweight="bold")
+        ax_z.set_xlabel("Frequency (Hz)", fontsize=10)
+        ax_z.set_ylabel("Impedance |Z_out| (mΩ)", fontsize=10, fontweight="bold")
+        ax_z.grid(True, which="both", linestyle=":", alpha=0.5)
+        ax_z.legend(loc="lower left")
+        
+        # Right Plot: Step Load Spectrum
+        ax_i.loglog(f_axis, I_load_spec, color="#EF4444", linewidth=2.5, label="Load Step Spectrum |I_load(f)|")
+        ax_i.axvline(x=f_corner, color="#8B5CF6", linestyle="--", label=f"Corner freq = {f_corner/1e3:.2f} kHz")
+        ax_i.axvline(x=f_n_val, color="red", linestyle=":", alpha=0.8, label=f"LC Resonance fn = {f_n_val:.1f} Hz")
+        
+        ax_i.set_title("Load Current Step Laplace Spectrum |I_load(f)|", fontsize=11, fontweight="bold")
+        ax_i.set_xlabel("Frequency (Hz)", fontsize=10)
+        ax_i.set_ylabel("Spectrum Magnitude (A/Hz)", fontsize=10, fontweight="bold")
+        ax_i.grid(True, which="both", linestyle=":", alpha=0.5)
+        ax_i.legend(loc="lower left")
+        
+        st.pyplot(fig_spec)
+        
+        st.markdown(f"""
+        > [!NOTE]
+        > **📚 频域机理解析 (Physical Mechanism in Frequency Domain)**:
+        > 1. **二阶 LC 阻抗峰值**: 输出阻抗 $|Z_{{out}}(f)|$ 在有阻尼谐振频点 **{f_d_val:.1f} Hz** 处具有明显的共模谐振峰值（峰值阻抗达 **{z_peak:.1f} m&Omega;**）。此处输出电容与电感发生并联谐振，阻抗呈现最大值，这是引起电压波动与振铃的电路本源。
+        > 2. **阶跃电流激励**: 阶跃负载电流 $\Delta I_{{load}}$ 从低频到高频呈广谱分布。在谐振频点 **{f_d_val/1e3:.2f} kHz** 处，阶跃信号的频谱能量依然非常高（处于转折频率 **{f_corner/1e3:.2f} kHz** 附近，转折频率处由于有限跳变率 $SR={ol_slew_rate/1e6:.1f}\\text{{ A/}}\\mu\\text{{s}}$ 频谱开始以 $-40\\text{{ dB/dec}}$ 加速衰减）。高能量的阶跃激励注入到高阻抗的 LC 谐振点上，从而诱发了时域上明显的 **{f_osc_val:.2f} Hz** 有阻尼谐振波动！
+        """)
 
     # Show equivalent open loop schematic
     st.markdown("#### 📐 开环等效电路小信号拓扑结构")
