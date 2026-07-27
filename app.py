@@ -206,6 +206,151 @@ st.sidebar.markdown("""
 st.markdown('<div id="section-1"></div>', unsafe_allow_html=True)
 st.write("## 1. 拓扑与参数配置 (Topology & Parameter Configurations)")
 
+st.markdown("##### 📐 双相交错反向耦合 Buck 主功率拓扑图 (Two-Phase Interleaved Buck with Inverse Coupled Inductor Schematic)")
+topo_svg = """<svg width="900" height="320" viewBox="0 0 900 320" fill="none" xmlns="http://www.w3.org/2000/svg" style="background:#F8FAFC; border-radius:12px; border:1px solid #E2E8F0; display:block; margin: 15px auto;">
+  <!-- Ground Rail at y=260 -->
+  <line x1="50" y1="260" x2="850" y2="260" stroke="#0F172A" stroke-width="2"/>
+  <circle cx="850" cy="260" r="3" fill="#0F172A"/>
+  
+  <!-- Vin Power Rail at y=40 -->
+  <line x1="80" y1="40" x2="240" y2="40" stroke="#0F172A" stroke-width="2"/>
+  
+  <!-- Input Voltage Source Vin -->
+  <circle cx="80" cy="150" r="16" fill="#FFFFFF" stroke="#0F172A" stroke-width="2"/>
+  <text x="80" y="145" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0F172A" text-anchor="middle">+</text>
+  <text x="80" y="161" font-family="sans-serif" font-size="12" font-weight="bold" fill="#0F172A" text-anchor="middle">_</text>
+  <text x="80" y="185" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0F172A" text-anchor="middle">Vin</text>
+  <line x1="80" y1="40" x2="80" y2="134" stroke="#0F172A" stroke-width="1.5"/>
+  <line x1="80" y1="166" x2="80" y2="260" stroke="#0F172A" stroke-width="1.5"/>
+  <circle cx="80" cy="40" r="2.5" fill="#0F172A"/>
+  <circle cx="80" cy="260" r="2.5" fill="#0F172A"/>
+
+  <!-- Phase 1 Half Bridge (x=160) -->
+  <!-- HS Switch Q1_HS -->
+  <circle cx="160" cy="50" r="2.5" fill="#0F172A"/>
+  <circle cx="160" cy="90" r="2.5" fill="#0F172A"/>
+  <line x1="160" y1="40" x2="160" y2="50" stroke="#0F172A" stroke-width="1.5"/>
+  <line x1="160" y1="90" x2="160" y2="100" stroke="#0F172A" stroke-width="1.5"/>
+  <!-- Switch lever -->
+  <line x1="160" y1="90" x2="172" y2="58" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+  <text x="135" y="75" font-family="sans-serif" font-size="9" font-weight="bold" fill="#3B82F6" text-anchor="end">Q1_HS (d1)</text>
+
+  <!-- LS Switch Q1_LS -->
+  <circle cx="160" cy="210" r="2.5" fill="#0F172A"/>
+  <circle cx="160" cy="250" r="2.5" fill="#0F172A"/>
+  <line x1="160" y1="100" x2="160" y2="210" stroke="#0F172A" stroke-width="1.5"/>
+  <line x1="160" y1="250" x2="160" y2="260" stroke="#0F172A" stroke-width="1.5"/>
+  <!-- Switch lever -->
+  <line x1="160" y1="250" x2="172" y2="218" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+  <text x="135" y="235" font-family="sans-serif" font-size="9" font-weight="bold" fill="#3B82F6" text-anchor="end">Q1_LS (1-d1)</text>
+  
+  <!-- Node SW1 -->
+  <circle cx="160" cy="100" r="3" fill="#0F172A"/>
+  <text x="172" y="112" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563">SW1</text>
+  <line x1="160" y1="100" x2="280" y2="100" stroke="#0F172A" stroke-width="1.5"/>
+
+  <!-- Phase 2 Half Bridge (x=240) -->
+  <!-- HS Switch Q2_HS -->
+  <circle cx="240" cy="50" r="2.5" fill="#0F172A"/>
+  <circle cx="240" cy="90" r="2.5" fill="#0F172A"/>
+  <line x1="240" y1="40" x2="240" y2="50" stroke="#0F172A" stroke-width="1.5"/>
+  <line x1="240" y1="90" x2="240" y2="160" stroke="#0F172A" stroke-width="1.5"/>
+  <!-- Switch lever -->
+  <line x1="240" y1="90" x2="252" y2="58" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+  <text x="215" y="75" font-family="sans-serif" font-size="9" font-weight="bold" fill="#3B82F6" text-anchor="end">Q2_HS (d2)</text>
+
+  <!-- LS Switch Q2_LS -->
+  <circle cx="240" cy="210" r="2.5" fill="#0F172A"/>
+  <circle cx="240" cy="250" r="2.5" fill="#0F172A"/>
+  <line x1="240" y1="160" x2="240" y2="210" stroke="#0F172A" stroke-width="1.5"/>
+  <line x1="240" y1="250" x2="240" y2="260" stroke="#0F172A" stroke-width="1.5"/>
+  <!-- Switch lever -->
+  <line x1="240" y1="250" x2="252" y2="218" stroke="#3B82F6" stroke-width="2" stroke-linecap="round"/>
+  <text x="215" y="235" font-family="sans-serif" font-size="9" font-weight="bold" fill="#3B82F6" text-anchor="end">Q2_LS (1-d2)</text>
+  
+  <!-- Node SW2 -->
+  <circle cx="240" cy="160" r="3" fill="#0F172A"/>
+  <text x="252" y="172" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563">SW2</text>
+  <line x1="240" y1="160" x2="280" y2="160" stroke="#0F172A" stroke-width="1.5"/>
+
+  <!-- Phase 1 Inductor L1 & DCR1 -->
+  <!-- L1 Inductor Symbol -->
+  <path d="M 280 100 C 288 90 296 90 296 100 C 304 90 312 90 312 100 C 320 90 328 90 328 100 C 336 90 344 90 344 100 C 352 90 360 90 360 100" stroke="#0F172A" stroke-width="1.8" fill="none"/>
+  <text x="320" y="82" font-family="sans-serif" font-size="10" font-weight="bold" fill="#D97706" text-anchor="middle">L1 (L)</text>
+  <circle cx="276" cy="94" r="3.5" fill="#EF4444"/> <!-- Coupling Dot 1 -->
+  <line x1="360" y1="100" x2="400" y2="100" stroke="#0F172A" stroke-width="1.5"/>
+  <!-- DCR1 Resistor Symbol -->
+  <path d="M 400 100 L 404 100 L 407 93 L 412 107 L 417 93 L 422 107 L 427 93 L 432 107 L 436 100 L 440 100" stroke="#0F172A" stroke-width="1.5" fill="none"/>
+  <text x="420" y="82" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563" text-anchor="middle">Rdcr1 (DCR)</text>
+  <line x1="440" y1="100" x2="520" y2="100" stroke="#0F172A" stroke-width="1.5"/>
+
+  <!-- Phase 2 Inductor L2 & DCR2 -->
+  <!-- L2 Inductor Symbol -->
+  <path d="M 280 160 C 288 150 296 150 296 160 C 304 150 312 150 312 160 C 320 150 328 150 328 160 C 336 150 344 150 344 160 C 352 150 360 150 360 160" stroke="#0F172A" stroke-width="1.8" fill="none"/>
+  <text x="320" y="142" font-family="sans-serif" font-size="10" font-weight="bold" fill="#D97706" text-anchor="middle">L2 (L)</text>
+  <circle cx="364" cy="154" r="3.5" fill="#EF4444"/> <!-- Coupling Dot 2 (Inverse polarity) -->
+  <line x1="360" y1="160" x2="400" y2="160" stroke="#0F172A" stroke-width="1.5"/>
+  <!-- DCR2 Resistor Symbol -->
+  <path d="M 400 160 L 404 160 L 407 153 L 412 167 L 417 153 L 422 167 L 427 153 L 432 167 L 436 160 L 440 160" stroke="#0F172A" stroke-width="1.5" fill="none"/>
+  <text x="420" y="142" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563" text-anchor="middle">Rdcr2 (DCR)</text>
+  <line x1="440" y1="160" x2="520" y2="160" stroke="#0F172A" stroke-width="1.5"/>
+
+  <!-- Inverse Coupling core lines and coefficient label -->
+  <line x1="285" y1="126" x2="355" y2="126" stroke="#D97706" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <line x1="285" y1="134" x2="355" y2="134" stroke="#D97706" stroke-width="1.5" stroke-dasharray="3,2"/>
+  <text x="320" y="120" font-family="sans-serif" font-size="9" font-weight="bold" fill="#D97706" text-anchor="middle">耦合 k (反向)</text>
+
+  <!-- Output Connecting Nodes -->
+  <line x1="520" y1="100" x2="520" y2="70" stroke="#0F172A" stroke-width="1.5"/>
+  <line x1="520" y1="160" x2="520" y2="70" stroke="#0F172A" stroke-width="1.5"/>
+  <circle cx="520" cy="100" r="2.5" fill="#0F172A"/>
+  <circle cx="520" cy="160" r="2.5" fill="#0F172A"/>
+  <circle cx="520" cy="70" r="2.5" fill="#0F172A"/>
+  
+  <!-- Output rail from x=520 to x=840 -->
+  <line x1="520" y1="70" x2="840" y2="70" stroke="#0F172A" stroke-width="2"/>
+  <circle cx="840" cy="70" r="3" fill="#0F172A"/>
+  <text x="840" y="55" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0F172A" text-anchor="middle">Vo (Vref)</text>
+
+  <!-- Output Capacitor Branch 1 (C1 & Resr1) -->
+  <line x1="600" y1="70" x2="600" y2="105" stroke="#0F172A" stroke-width="1.5"/>
+  <!-- Capacitor C1 -->
+  <line x1="588" y1="105" x2="612" y2="105" stroke="#0F172A" stroke-width="2"/>
+  <line x1="588" y1="110" x2="612" y2="110" stroke="#0F172A" stroke-width="2"/>
+  <text x="618" y="112" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">C1</text>
+  <line x1="600" y1="110" x2="600" y2="140" stroke="#0F172A" stroke-width="1.5"/>
+  <!-- Resr1 Resistor -->
+  <path d="M 600 140 L 600 144 L 593 147 L 607 152 L 593 157 L 607 162 L 593 167 L 607 172 L 600 176 L 600 180" stroke="#0F172A" stroke-width="1.5" fill="none"/>
+  <text x="618" y="162" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563">Resr1</text>
+  <line x1="600" y1="180" x2="600" y2="260" stroke="#0F172A" stroke-width="1.5"/>
+  <circle cx="600" cy="70" r="2.5" fill="#0F172A"/>
+  <circle cx="600" cy="260" r="2.5" fill="#0F172A"/>
+
+  <!-- Output Capacitor Branch 2 (C2 & Resr2) -->
+  <line x1="690" y1="70" x2="690" y2="105" stroke="#0F172A" stroke-width="1.5"/>
+  <!-- Capacitor C2 -->
+  <line x1="678" y1="105" x2="702" y2="105" stroke="#0F172A" stroke-width="2"/>
+  <line x1="678" y1="110" x2="702" y2="110" stroke="#0F172A" stroke-width="2"/>
+  <text x="708" y="112" font-family="sans-serif" font-size="9" font-weight="bold" fill="#4B5563">C2</text>
+  <line x1="690" y1="110" x2="690" y2="140" stroke="#0F172A" stroke-width="1.5"/>
+  <!-- Resr2 Resistor -->
+  <path d="M 690 140 L 690 144 L 683 147 L 697 152 L 683 157 L 697 162 L 683 167 L 697 172 L 690 176 L 690 180" stroke="#0F172A" stroke-width="1.5" fill="none"/>
+  <text x="708" y="162" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563">Resr2</text>
+  <line x1="690" y1="180" x2="690" y2="260" stroke="#0F172A" stroke-width="1.5"/>
+  <circle cx="690" cy="70" r="2.5" fill="#0F172A"/>
+  <circle cx="690" cy="260" r="2.5" fill="#0F172A"/>
+
+  <!-- Output Load Resistor R_load -->
+  <line x1="780" y1="70" x2="780" y2="120" stroke="#0F172A" stroke-width="1.5"/>
+  <!-- Rload Resistor -->
+  <path d="M 780 120 L 780 126 L 773 130 L 787 135 L 773 140 L 787 145 L 773 150 L 787 155 L 773 160 L 787 165 L 780 171 L 780 180" stroke="#0F172A" stroke-width="1.5" fill="none"/>
+  <text x="798" y="152" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#4B5563">R_load</text>
+  <line x1="780" y1="180" x2="780" y2="260" stroke="#0F172A" stroke-width="1.5"/>
+  <circle cx="780" cy="70" r="2.5" fill="#0F172A"/>
+  <circle cx="780" cy="260" r="2.5" fill="#0F172A"/>
+</svg>"""
+st.markdown(topo_svg, unsafe_allow_html=True)
+
 st.markdown('<div id="section-1-1"></div>', unsafe_allow_html=True)
 st.write("### 🔌 1.1 核心拓扑与滤波器参数配置 (Power Stage Hardware Configuration)")
 col_hw1, col_hw2, col_hw3, col_hw4 = st.columns(4)
