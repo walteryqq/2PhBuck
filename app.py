@@ -1293,11 +1293,19 @@ try:
         Z_out_mag = 1.0 / np.abs(Y_out) # in Ohms
         Z_out_mOhm = Z_out_mag * 1e3 # in mOhms
         
-        # I_load(f) calculation (Laplace Spectrum Magnitude)
+        # I_load(f) calculation (Fourier Spectrum of the transition segment itself)
         delta_I = abs(ol_i_target - ol_i_init)
         t_ramp = delta_I / ol_slew_rate if ol_slew_rate > 0 else 1e-9
-        sin_term = np.abs(np.sin(np.pi * f_axis * t_ramp))
-        I_load_spec = (ol_slew_rate / (2.0 * np.pi**2 * f_axis**2)) * sin_term
+        
+        # 1. Windowed current increment i_delta(t) spectrum (Ramp pulse from 0 to delta_I)
+        omega = 2.0 * np.pi * f_axis
+        term1 = (t_ramp * np.exp(-1j * omega * t_ramp)) / (-1j * omega)
+        term2 = (np.exp(-1j * omega * t_ramp) - 1.0) / (omega**2)
+        I_delta_complex = ol_slew_rate * (term1 + term2)
+        I_delta_spec = np.abs(I_delta_complex)
+        
+        # 2. Current rate-of-change dI/dt spectrum (Sinc pulse of height slew_rate, width t_ramp)
+        dI_spec = delta_I * np.abs(np.sinc(f_axis * t_ramp))
         
         f_corner = 1.0 / (np.pi * t_ramp)
         
@@ -1322,14 +1330,15 @@ try:
         ax_z.grid(True, which="both", linestyle=":", alpha=0.5)
         ax_z.legend(loc="lower left")
         
-        # Right Plot: Step Load Spectrum
-        ax_i.loglog(f_axis, I_load_spec, color="#EF4444", linewidth=2.5, label="Load Step Spectrum |I_load(f)|")
+        # Right Plot: Windowed Transition Spectrum (Sinc & Ramp Pulse)
+        ax_i.loglog(f_axis, I_delta_spec, color="#EF4444", linewidth=2.5, label="Ramp Pulse |I_trans(f)| (A·s)")
+        ax_i.loglog(f_axis, dI_spec, color="#F59E0B", linewidth=2.0, linestyle="--", label="Derivative |dI/dt(f)| (A)")
         ax_i.axvline(x=f_corner, color="#8B5CF6", linestyle="--", label=f"Corner freq = {f_corner/1e3:.2f} kHz")
         ax_i.axvline(x=f_n_val, color="red", linestyle=":", alpha=0.8, label=f"LC Resonance fn = {f_n_val:.1f} Hz")
         
-        ax_i.set_title("Load Current Step Laplace Spectrum |I_load(f)|", fontsize=11, fontweight="bold")
+        ax_i.set_title("Transition Segment Fourier Spectrum magnitude", fontsize=11, fontweight="bold")
         ax_i.set_xlabel("Frequency (Hz)", fontsize=10)
-        ax_i.set_ylabel("Spectrum Magnitude (A/Hz)", fontsize=10, fontweight="bold")
+        ax_i.set_ylabel("Spectrum Amplitude", fontsize=10, fontweight="bold")
         ax_i.grid(True, which="both", linestyle=":", alpha=0.5)
         ax_i.legend(loc="lower left")
         
@@ -1337,9 +1346,12 @@ try:
         
         st.markdown(f"""
         > [!NOTE]
-        > **📚 频域机理解析 (Physical Mechanism in Frequency Domain)**:
-        > 1. **二阶 LC 阻抗峰值**: 输出阻抗 $|Z_{{out}}(f)|$ 在有阻尼谐振频点 **{f_d_val:.1f} Hz** 处具有明显的共模谐振峰值（峰值阻抗达 **{z_peak:.1f} m&Omega;**）。此处输出电容与电感发生并联谐振，阻抗呈现最大值，这是引起电压波动与振铃的电路本源。
-        > 2. **阶跃电流激励**: 阶跃负载电流 $\Delta I_{{load}}$ 从低频到高频呈广谱分布。在谐振频点 **{f_d_val/1e3:.2f} kHz** 处，阶跃信号的频谱能量依然非常高（处于转折频率 **{f_corner/1e3:.2f} kHz** 附近，转折频率处由于有限跳变率 $SR={ol_slew_rate/1e6:.1f}\\text{{ A/}}\\mu\\text{{s}}$ 频谱开始以 $-40\\text{{ dB/dec}}$ 加速衰减）。高能量的阶跃激励注入到高阻抗的 LC 谐振点上，从而诱发了时域上明显的 **{f_osc_val:.2f} Hz** 有阻尼谐振波动！
+        > **📚 频域暂态机理解析 (Fourier Transition Spectrum & Impedance)**:
+        > 1. **二阶 LC 阻抗峰值**: 输出阻抗 $|Z_{{out}}(f)|$ 在共模有阻尼谐振点 **{f_d_val:.1f} Hz** 处阻抗最高（极值达 **{z_peak:.1f} m&Omega;**）。此处输出电容与电感发生并联谐振，阻抗呈现最大值，这是电压产生振铃的根本温床。
+        > 2. **跳变段频谱分布 (64A -> 160A)**：
+        >    * **电流增量暂态段 $i_{{\Delta}}(t)$ 频谱**（红实线）：代表跳变这一个斜坡脉冲段的频谱（低频平坦区为 $0.5 \\cdot \\Delta I \\cdot t_{{ramp}} = {0.5 * delta_I * t_ramp * 1e3:.3f}\\text{{ mA}}\\cdot\\text{{s}}$，高频按 $-20\\text{{ dB/dec}}$ 衰减）。
+        >    * **变化率 $di_{{load}}/dt$ 频谱**（黄虚线）：由于跳变仅在 $t_{{ramp}} = {t_ramp * 1e6:.1f}\\ \\mu\\text{{s}}$ 时间内以有限斜率 $SR={ol_slew_rate/1e6:.1f}\\text{{ A/}}\\mu\\text{{s}}$ 增长，其变化率在时域为一个宽为 $t_{{ramp}}$ 的矩形脉冲，其频谱呈经典的 **Sinc 函数** 分布（低频处为电流变化量 $\\Delta I = {delta_I:.1f}\\text{{ A}}$）。
+        >    * **谐振激发**：在 LC 谐振频率点 **{f_d_val/1e3:.2f} kHz** 处，跳变段的频谱能量值非常高（正好处在转折频率 **{f_corner/1e3:.2f} kHz** 附近），从而向系统注入了大量的谐振分量，诱发了时域上明显的 **{f_osc_val:.2f} Hz** 正弦振荡！
         """)
 
     # Show equivalent open loop schematic
