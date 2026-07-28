@@ -871,6 +871,7 @@ try:
     leq_uH = bode_res['Leq'] * 1e6
     rdcr_eq_mOhm = (Rdcr / 2.0) * 1e3
     delay_val_us = (delay_cycles / fs) * 1e6
+    f_filter_kHz = (1.0 / (2.0 * np.pi * tau_d) * 1e-3) if tau_d > 0 else 0.0
     
     st.info(f"""
     📝 **小信号电路平均模型参数关系**:
@@ -891,6 +892,8 @@ try:
          $$H(s) = \\left( K_p + \\frac{{K_{{i,c}}}}{{s}} + \\frac{{K_d s}}{{1 + \\tau_d s}} \\right) \\cdot e^{{-s T_{{delay}}}}$$
          代入当前值：
          $$H(s) = \\left( {kp:.5f} + \\frac{{{ki_continuous:.2f}}}{{s}} + \\frac{{{kd:.6e} s}}{{1 + {tau_d:.2e} s}} \\right) \\cdot e^{{-s \\cdot {delay_val_us:.2f}\\,\\mu\\text{{s}}}}$$
+         - **数字计算/更新延迟 $T_{{delay}}$**: 当前设置 $N_{{delay}} = {delay_cycles:.2f}$ 个开关周期，对应物理延时 $T_{{delay}} = {delay_val_us:.2f}\\,\\mu\\text{{s}}$。其在频域引入指数相移 $e^{{-s T_{{delay}}}}$，是限制环路带宽和引起相位裕度下降的主要物理源。
+         - **微分滤波时间常数 $\\tau_d$**: 当前设置 $\\tau_d = {tau_d * 1e6:.2f}\\,\\mu\\text{{s}}$，对应一阶低通滤波截止频率 $f_{{filter}} = {f_filter_kHz:.2f}\\text{{ kHz}}$，用以限制理想微分器高频增益的无限放大，阻断高频采样噪声与开关纹波。
        * **控制-输出传递函数 $G_{{vd}}(s)$**:
          $$G_{{vd}}(s) = V_{{in}} \\cdot \\frac{{Z_p(s)}}{{Z_L(s) + Z_p(s)}}$$
          其中：
