@@ -1469,6 +1469,23 @@ try:
     3. **相位裕度 PM**: 应当保持在 $45^\circ \sim 60^\circ$。若 PM 太低，电压波形会出现振荡；若 PM 太高，系统响应会变慢。
     4. **微分项 $K_d$ 与高频滤波时间常数 $\tau_d$**: 数字控制中，直接微分会放大噪声，因此采用低通滤波的 $D$ 项：$G_d(s) = \frac{K_d s}{1 + \tau_d s}$。增加 $K_d$ 可以提升穿越频率处的相位裕度，但需注意噪声影响。
     """)
+    
+    st.markdown("### 📊 离散时间建模与采样效应核心指南 (Discrete-Time Modeling Summary of Key Points)")
+    st.markdown("""
+    在数字控制开关电源设计中，传统的连续小信号平均模型在高频段（接近奈奎斯特频率）会因为忽略了采样效应、电磁混叠及数字计算延时而产生较大的偏差。以下是建立精确控制环路的关键要点：
+    
+    * **离散时间建模的必要性 (Discrete-Time Modeling Basis)**:
+      在离散时间建模方法中，功率变换器的非线性开关状态动力学需要在系统的特定工作点（Operating Point）附近进行线性化。这可以建立一个精确的状态空间离散时间模型（Discrete-Time State-Space Model），从而完整且正确地描述反馈环路中的采样效应（Sampling Effects）、混叠（Aliasing）以及计算延时。
+    
+    * **延迟项的频域等效近似与局限 (Averaged Model Delay Approximation & Limitations)**:
+      当系统满足小信号防混叠近似（Small-Aliasing Approximation）条件时，总反馈环路延迟对系统相位响应的影响，可以通过在传统的连续域小信号平均模型中引入一个**等效传输延迟项 (Transport Delay)** 来近似表示（即相角超前/滞后修正）。但在混叠严重或超高频带宽下，这种简化近似修正将失效，必须直接基于完整的离散时间模型进行数字控制补偿器的设计。
+    
+    * **典型变换器的冲激响应不变离散化 (Impulse-Invariant Discretization)**:
+      对于像 Buck 变换器这样拓扑结构在开关状态下不随时间发生改变的线性时不变（LTI）功率级，只要在连续平均模型中引入等效延迟作为传输延迟，就可以直接通过**冲激响应不变映射法 (Impulse-Invariant Discretization)** 来获得极高精确度的等效离散时间小信号模型。
+    
+    * **脚本化与工程实现 (Scripting & Automation Implementation)**:
+      离散时间状态空间模型的迭代求解、多变量差分计算以及闭环极点配置，可以通过 Python / Matlab 等脚本非常便捷且高效地完成，帮助工程师快速评估系统的离散域裕度、极限环振荡风险及瞬态响应性能。
+    """)
 
 except Exception as e:
     st.error(f"仿真出现错误: {e}")
